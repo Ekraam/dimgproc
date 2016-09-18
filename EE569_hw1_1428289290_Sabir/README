@@ -1,0 +1,103 @@
+# EE569 Homework Assignment #1
+# Date: Sept 18, 2016
+# Name: Ekraam Sabir
+# ID: 1428-2892-90
+# email: esabir@usc.edu
+#
+# Compiled on Linux Ubuntu 14.04 LTS with g++
+# Define compiler and linker
+
+
+CC=compile
+CFLAGS=-g -Wall
+LN=g++
+
+All: crop resize CMYK HSL HistEq-MethodA HistEq-MethodB SpecialEffect HistTransform PSNR MixNoise NLM
+
+crop: crop.cpp
+	@echo "Compiling crop.cpp"
+	$(CC) $(CFLAGS) -c crop.cpp
+	$(LN) -o crop crop.o
+	@echo "Question 1 - a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./crop input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256] [x1 = 55] [y1 = 85] [x2 = 184] [y2 = 214]"
+
+resize: resize.cpp
+	@echo "compiling resize.cpp"
+	$(CC) $(CFLAGS) -c resize.cpp
+	$(LN) -o resize resize.o
+	@echo "Question 1 - a -2"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./resize input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256] [outputHeight = 100] [outputWidth = 100]"
+
+CMYK: CMYK.cpp
+	@echo "Compiling CMYK.cpp"
+	$(CC) $(CFLAGS) -c CMYK.cpp
+	$(LN) -o CMYK CMYK.o
+	@echo "Question 1 - b -1"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./CMYK input_image.raw output_image.raw output_C.raw output_M.raw output_Y.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+HSL: HSL.cpp
+	@echo "Compiling HSL.cpp"
+	$(CC) $(CFLAGS) -c HSL.cpp
+	$(LN) -o HSL HSL.o
+	@echo "Question 1 - b - 2"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./HSL input_image.raw output_image.raw output_C.raw output_M.raw output_Y.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+HistEq-MethodA: HistEq-MethodA.cpp
+	@echo "Compiling HistEq-MethodA.cpp"
+	$(CC) $(CFLAGS) -c HistEq-MethodA.cpp
+	$(LN) -o HistEq-MethodA HistEq-MethodA.o
+	@echo "Question 2 - a - method A and 2-b-methodA"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./HistEq-MethodA input_image.raw output_methodA.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"
+
+HistEq-MethodB: HistEq-MethodB.cpp
+	@echo "Compiling HistEq-MethodB.cpp"
+	$(CC) $(CFLAGS) -c HistEq-MethodB.cpp
+	$(LN) -o HistEq-MethodB HistEq-MethodB.o
+	@echo "Question 2 - a - method B and 2-b-method B"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./HistEq-MethodB input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"
+
+SpecialEffect: SpecialEffect.cpp
+	@echo "Compiling SpecialEffect.cpp"
+	$(CC) $(CFLAGS) -c SpecialEffect.cpp
+	$(LN) -o SpecialEffect SpecialEffect.o
+	@echo "Question 2 - b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./SpecialEffect input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+HistTransform: HistTransform.cpp
+	@echo "Compiling HistTransform.cpp"
+	$(CC) $(CFLAGS) -c HistTransform.cpp
+	$(LN) -o HistTransform HistTransform.o
+	@echo "Question 2-d"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./HistTransform input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"
+
+MixNoise: MixNoise.cpp
+	@echo "Compiling MixNoise.cpp"
+	$(CC) $(CFLAGS) -c MixNoise.cpp
+	$(LN) -o MixNoise MixNoise.o
+	@echo "Question 3-a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./MixNoise input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+PSNR: PSNR.cpp
+	@echo "Compiling PSNR.cpp"
+	$(CC) $(CFLAGS) -c PSNR.cpp
+	$(LN) -o PSNR PSNR.o
+	@echo "Question 3 for measuring PSNR"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./PSNR input_noisy_image.raw input_clean_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+NLM: NLM.cpp
+	@echo "Compiling NLM.cpp"
+	$(CC) $(CFLAGS) -c NLM.cpp
+	$(LN) -o NLM NLM.o
+	@echo "Question 3 b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./NLM input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"

@@ -4,9 +4,13 @@
 # ID: 1428-2892-90
 # email: esabir@usc.edu
 #
+# The image reading and writing sections of the code have been sourced
+# from the sample readraw.cpp
+#
 # Compiled on Linux Ubuntu 14.04 LTS with g++
 # Define compiler and linker
-
+#
+#
 
 CC=compile
 CFLAGS=-g -Wall

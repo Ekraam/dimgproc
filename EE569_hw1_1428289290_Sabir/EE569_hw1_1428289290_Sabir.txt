@@ -1,0 +1,1665 @@
+# EE569 Homework Assignment #1
+# Date: Sept 18, 2016
+# Name: Ekraam Sabir
+# ID: 1428-2892-90
+# email: esabir@usc.edu
+#
+# The image reading and writing sections of the code have been sourced
+# from the sample readraw.cpp
+#
+# Compiled on Linux Ubuntu 14.04 LTS with g++
+# Define compiler and linker
+#
+#
+
+CC=compile
+CFLAGS=-g -Wall
+LN=g++
+
+All: crop resize CMYK HSL HistEq-MethodA HistEq-MethodB SpecialEffect HistTransform PSNR MixNoise NLM
+
+crop: crop.cpp
+	@echo "Compiling crop.cpp"
+	$(CC) $(CFLAGS) -c crop.cpp
+	$(LN) -o crop crop.o
+	@echo "Question 1 - a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./crop input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256] [x1 = 55] [y1 = 85] [x2 = 184] [y2 = 214]"
+
+resize: resize.cpp
+	@echo "compiling resize.cpp"
+	$(CC) $(CFLAGS) -c resize.cpp
+	$(LN) -o resize resize.o
+	@echo "Question 1 - a -2"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./resize input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256] [outputHeight = 100] [outputWidth = 100]"
+
+CMYK: CMYK.cpp
+	@echo "Compiling CMYK.cpp"
+	$(CC) $(CFLAGS) -c CMYK.cpp
+	$(LN) -o CMYK CMYK.o
+	@echo "Question 1 - b -1"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./CMYK input_image.raw output_image.raw output_C.raw output_M.raw output_Y.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+HSL: HSL.cpp
+	@echo "Compiling HSL.cpp"
+	$(CC) $(CFLAGS) -c HSL.cpp
+	$(LN) -o HSL HSL.o
+	@echo "Question 1 - b - 2"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./HSL input_image.raw output_image.raw output_C.raw output_M.raw output_Y.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+HistEq-MethodA: HistEq-MethodA.cpp
+	@echo "Compiling HistEq-MethodA.cpp"
+	$(CC) $(CFLAGS) -c HistEq-MethodA.cpp
+	$(LN) -o HistEq-MethodA HistEq-MethodA.o
+	@echo "Question 2 - a - method A and 2-b-methodA"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./HistEq-MethodA input_image.raw output_methodA.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"
+
+HistEq-MethodB: HistEq-MethodB.cpp
+	@echo "Compiling HistEq-MethodB.cpp"
+	$(CC) $(CFLAGS) -c HistEq-MethodB.cpp
+	$(LN) -o HistEq-MethodB HistEq-MethodB.o
+	@echo "Question 2 - a - method B and 2-b-method B"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./HistEq-MethodB input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"
+
+SpecialEffect: SpecialEffect.cpp
+	@echo "Compiling SpecialEffect.cpp"
+	$(CC) $(CFLAGS) -c SpecialEffect.cpp
+	$(LN) -o SpecialEffect SpecialEffect.o
+	@echo "Question 2 - b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./SpecialEffect input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+HistTransform: HistTransform.cpp
+	@echo "Compiling HistTransform.cpp"
+	$(CC) $(CFLAGS) -c HistTransform.cpp
+	$(LN) -o HistTransform HistTransform.o
+	@echo "Question 2-d"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./HistTransform input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"
+
+MixNoise: MixNoise.cpp
+	@echo "Compiling MixNoise.cpp"
+	$(CC) $(CFLAGS) -c MixNoise.cpp
+	$(LN) -o MixNoise MixNoise.o
+	@echo "Question 3-a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./MixNoise input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+PSNR: PSNR.cpp
+	@echo "Compiling PSNR.cpp"
+	$(CC) $(CFLAGS) -c PSNR.cpp
+	$(LN) -o PSNR PSNR.o
+	@echo "Question 3 for measuring PSNR"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./PSNR input_noisy_image.raw input_clean_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+NLM: NLM.cpp
+	@echo "Compiling NLM.cpp"
+	$(CC) $(CFLAGS) -c NLM.cpp
+	$(LN) -o NLM NLM.o
+	@echo "Question 3 b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./NLM input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"
+
+
+// Homework 1
+// This code implements the cropping function
+// Question 1.a.1
+// This code takes 10 arguments in the following format
+// Crops from starting point (x1,y1) to (x2,y2)
+// program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [x1 = 55] [y1 = 85] [x2 = 184] [y2 = 214]
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	int x1, x2, y1, y2;
+	
+	// Check for proper syntax
+	if (argc < 10){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program is for image cropping (x1,y1) and (x2,y2) are image cropping coordinates" << endl;
+		cout << "You must have 10 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [x1 = 55] [y1 = 85] [x2 = 184] [y2 = 214]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	  x1 = atoi(argv[6]);
+	  y1 = atoi(argv[7]);
+	  x2 = atoi(argv[8]);
+	  y2 = atoi(argv[9]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read image (filename specified by first argument) into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+
+	//get the height and width of the cropped image
+	int cropHeight = y2 - y1 + 1;
+	int cropWidth = x2 - x1 + 1;
+	
+	//create a blank new iamge array
+	unsigned char newImage[cropHeight][cropWidth][BytesPerPixel];
+
+	//assign values to the cropped image element by element of each channel
+	for (int row=0; row<cropHeight; row++){
+	  for (int col=0; col<cropWidth; col++){
+	    newImage[row][col][0] = Imagedata[row+y1][col+x1][0]; //Red Channel
+	    newImage[row][col][1] = Imagedata[row+y1][col+x1][1]; //Green Channel
+	    newImage[row][col][2] = Imagedata[row+y1][col+x1][2]; //Blue Channel
+	  }
+	}
+
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), cropHeight*cropWidth*BytesPerPixel, file);
+	fclose(file);
+
+	cout << "Cropped successfully with image Height " << cropHeight << " and image Width " << cropWidth << endl;
+
+	return 0;
+}
+
+
+
+// Homework 1
+// This code implements the resizing function
+// Question 1.a.2
+// This code takes 8 arguments in the following format
+// program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [outputHeight = 100] [outputWidth = 100]
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <math.h>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	int outputHeight, outputWidth;
+	
+	// Check for proper syntax
+	if (argc < 8){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program is for image resizing to outputHeight and outputWidth" << endl;
+		cout << "You must have 8 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [outputHeight = 100] [outputWidth = 100] " << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	  outputHeight = atoi(argv[6]);
+	  outputWidth = atoi(argv[7]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read image (filename specified by first argument) into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create a blank new iamge array
+	unsigned char newImage[outputHeight][outputWidth][BytesPerPixel];
+
+	//conversion ratio
+	float heightRatio = float(Height)/outputHeight;
+	float widthRatio = float(Width)/outputWidth;
+
+	//assign values to the cropped image element by element of each channel
+	for (int row=0; row<outputHeight; row++){
+	  for (int col=0; col<outputWidth; col++){
+
+	    //get the corresponding mapping values on source image for each pixel on resized image.
+	    float mappedHeight = heightRatio * row;
+	    float mappedWidth = widthRatio * col;
+	    
+	    //get the surrounding pixels in the source image for the mapped value
+	    int inputHeight1 = (int)floor(mappedHeight);
+	    int inputHeight2 = (int)ceil(mappedHeight);
+	    int inputWidth1 = (int)floor(mappedWidth);
+	    int inputWidth2 = (int)ceil(mappedWidth);
+	    
+	    //get the bilinear interpolated values from the source
+	    float a = mappedHeight - inputHeight1;
+	    float b = mappedWidth - inputWidth1;
+
+	    //The corresponding resize image values by bilinear interpolation
+	    newImage[row][col][0] = (unsigned char)((1-b)*((1-a)*Imagedata[inputHeight1][inputWidth1][0] + a*Imagedata[inputHeight2][inputWidth1][0]) + (b)*((1-a)*Imagedata[inputHeight1][inputWidth2][0] + a*Imagedata[inputHeight2][inputWidth2][0])); //Red Channel
+	    newImage[row][col][1] = (unsigned char)((1-b)*((1-a)*Imagedata[inputHeight1][inputWidth1][1] + a*Imagedata[inputHeight2][inputWidth1][1]) + (b)*((1-a)*Imagedata[inputHeight1][inputWidth2][1] + a*Imagedata[inputHeight2][inputWidth2][1])); //Green Channel
+	    newImage[row][col][2] = (unsigned char)((1-b)*((1-a)*Imagedata[inputHeight1][inputWidth1][2] + a*Imagedata[inputHeight2][inputWidth1][2]) + (b)*((1-a)*Imagedata[inputHeight1][inputWidth2][2] + a*Imagedata[inputHeight2][inputWidth2][2])); //Blue Channel
+	  }
+	}
+
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), outputHeight*outputWidth*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+// Homework 1
+// This code converts RGB to CMYK and saves the individual grayscale channels
+// Question 1.b.1
+// This code takes 9 arguments in the following format
+// program_name input_image.raw output_image.raw output_C.raw output_M.raw output_Y.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <math.h>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 8){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program is for converting RGB image to CMYK" << endl;
+		cout << "You must have 10 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw output_C.raw output_M.raw output_Y.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[6]);
+	  Width = atoi(argv[7]);
+	  Height = atoi(argv[8]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read image (filename specified by first argument) into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create a blank new image array
+	unsigned char newImage[Height][Width][BytesPerPixel];
+	unsigned char newImage_C[Height][Width];
+	unsigned char newImage_M[Height][Width];
+	unsigned char newImage_Y[Height][Width];
+
+	//compute all 3 channel values
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    newImage_C[row][col] = (unsigned char)((1 - (float)Imagedata[row][col][0]/(float)255)*255);
+	    newImage_M[row][col] = (unsigned char)((1 - (float)Imagedata[row][col][1]/(float)255)*255);
+	    newImage_Y[row][col] = (unsigned char)((1 - (float)Imagedata[row][col][2]/(float)255)*255);
+	  }
+	}
+
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    newImage[row][col][0] = newImage_C[row][col];
+	    newImage[row][col][1] = newImage_M[row][col];
+	    newImage[row][col][2] = newImage_Y[row][col];
+	  }
+	}
+
+	// Write combined image and channels from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	if (!(file=fopen(argv[3],"wb"))) {
+		cout << "Cannot open file: " << argv[3] << endl;
+		exit(1);
+	}
+	fwrite(newImage_C, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+
+	if (!(file=fopen(argv[4],"wb"))) {
+		cout << "Cannot open file: " << argv[4] << endl;
+		exit(1);
+	}
+	fwrite(newImage_M, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+
+	if (!(file=fopen(argv[5],"wb"))) {
+		cout << "Cannot open file: " << argv[5] << endl;
+		exit(1);
+	}
+	fwrite(newImage_Y, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+// Homework 1
+// This code converts RGB to HSL and saves the individual grayscale channels as well as the combined image (HSL combined to single image)
+// Question 1.b.2
+// This code takes 9 arguments in the following format
+// program_name input_image.raw output_image.raw output_C.raw output_M.raw output_Y.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <math.h>
+#include <algorithm>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 9){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program is for converting RGB image to HSL" << endl;
+		cout << "You must have 9 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw output_C.raw output_M.raw output_Y.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[6]);
+	  Width = atoi(argv[7]);
+	  Height = atoi(argv[8]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read image (filename specified by first argument) into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create a blank new image array
+	unsigned char newImage[Height][Width][BytesPerPixel];
+	unsigned char newImage_H[Height][Width];
+	unsigned char newImage_S[Height][Width];
+	unsigned char newImage_L[Height][Width];
+
+	//temporary image initialized to store normalized floating values
+	float tempImage_H[Height][Width];
+	float tempImage_S[Height][Width];
+	float tempImage_L[Height][Width];
+
+	//initializing variables
+	float M, m, C;
+	float H, S, L;
+
+	//initialization of intermediate variables
+	float maxH = -1;
+	float minH = 5000;
+	float maxS = -1;
+	float minS = 5000;
+	float maxL = -1;
+	float minL = 5000;
+
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+
+	    //RGB scaled to 0-1
+	    float R = (float)Imagedata[row][col][0]/255;
+	    float G = (float)Imagedata[row][col][1]/255;
+	    float B = (float)Imagedata[row][col][2]/255;
+
+	    m = min(min(R,G),B);
+	    M = max(max(R,G),B);
+	    C = M - m;
+
+	    //calculate the H value
+	    if (C==0)
+	      H = 0;
+	    else if (M == R)
+	      H = (float)(60 * fmod(((G-B)/C), 6));
+	    else if (M == G)
+	      H = 60 * ((B-R)/C + 2);
+	    else if (M == B)
+	      H = 60 * ((R-G)/C + 4);
+
+	    //caluclate the value of L
+	    L = (M+m)/2;
+
+	    //calculate the S value
+	    if (L==0)
+	      S = 0;
+	    else if (0<L && L<0.5)
+	      S = C/(2*L);
+	    else
+	      S = C/(2 - 2*L);
+
+	    //store the dynamic range of floating values in a temporary array
+	    tempImage_H[row][col] = H;
+	    tempImage_S[row][col] = S;
+	    tempImage_L[row][col] = L;
+
+	    //store the max and min of each channel for normalization
+	    if (H>maxH)
+	      maxH=H;
+	    if (H<minH)
+	      minH=H;
+	    if (L<minL)
+	      minL=L;
+	    if (L>maxL)
+	      maxL=L;
+	    if (S>maxS)
+	      maxS = S;
+	    if (S<minS)
+	    minS = S;
+	  }
+	}
+
+	//Renormalize and store in the final image
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    newImage_H[row][col] = (unsigned char)((tempImage_H[row][col] - minH)/(maxH - minH)*255);
+	    newImage_S[row][col] = (unsigned char)((tempImage_S[row][col] - minS)/(maxS - minS)*255);
+	    newImage_L[row][col] = (unsigned char)((tempImage_L[row][col] - minL)/(maxL - minL)*255);
+	  }
+	}
+
+	//Store a combination of all 3 channels (Not required by assignment)
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    newImage[row][col][0] = newImage_H[row][col];
+	    newImage[row][col][1] = newImage_S[row][col];
+	    newImage[row][col][2] = newImage_L[row][col];
+	  }
+	}
+
+	// Write image data from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	if (!(file=fopen(argv[3],"wb"))) {
+		cout << "Cannot open file: " << argv[3] << endl;
+		exit(1);
+	}
+	fwrite(newImage_H, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+
+	if (!(file=fopen(argv[4],"wb"))) {
+		cout << "Cannot open file: " << argv[4] << endl;
+		exit(1);
+	}
+	fwrite(newImage_S, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+
+	if (!(file=fopen(argv[5],"wb"))) {
+		cout << "Cannot open file: " << argv[5] << endl;
+		exit(1);
+	}
+	fwrite(newImage_L, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+// Homework 1
+// This code performs histogram equalization
+// Question 2.a.method A and 2.b.method A
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_methodA.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <math.h>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 5){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs Histogram equalization" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_methodA.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read image (filename specified by first argument) into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create a blank new image array
+	unsigned char newImage[Height][Width][BytesPerPixel];
+	float inputHistogram[256][BytesPerPixel];
+	float cdf[256][BytesPerPixel];
+
+	//initialize the inputHistogram and cdf to 0
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<=255; grayScale++){
+	      inputHistogram[grayScale][channels] = 0;
+	      cdf[grayScale][channels] = 0;
+	  }
+	}
+
+	//populate the histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      inputHistogram[Imagedata[row][col][channels]][channels]++ ;
+	    }
+	  }
+	}
+
+	//normalize the histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<=255; grayScale++){
+	    inputHistogram[grayScale][channels] = inputHistogram[grayScale][channels]/(Height*Width);
+	  }
+	}
+
+	//calculate the CDF
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  cdf[0][channels] = inputHistogram[0][channels];
+	  for (int grayScale=1; grayScale<=255; grayScale++){
+	    cdf[grayScale][channels] = inputHistogram[grayScale][channels]+cdf[grayScale-1][channels];
+	  }
+	}
+
+	//mapping to new histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      int grayVal = Imagedata[row][col][channels];
+	      newImage[row][col][channels] = (unsigned char)(cdf[grayVal][channels]*255);
+	    }
+	  }
+	}
+
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+// Homework 1
+// This code performs histogram equalization using the cumulative probability method
+// Question 2.a.method B and 2.b.method B
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <math.h>
+#include <vector>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 5){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs Histogram equalization using the cumulative probability function" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image_methodB.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read image (filename specified by first argument) into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create a blank new image array
+	unsigned char newImage[Height][Width][BytesPerPixel];
+	int inputHistogram[256][BytesPerPixel];
+	int totalPixels = Height*Width;
+	vector<vector<vector<int> > > pixelArrangement;
+	pixelArrangement.resize(totalPixels);
+	for (int i=0; i<totalPixels; i++){
+	  pixelArrangement[i].resize(3);
+	  for (int j=0; j<3; j++){
+	    pixelArrangement[i][j].resize(BytesPerPixel);
+	  }
+	}
+
+	//initialize the inputHistogram and pixelArrangement to 0
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<=255; grayScale++){
+	      inputHistogram[grayScale][channels] = 0;
+	  }
+	}
+	
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int i=0; i<3; i++){
+	    for (int j=0; j<(Height*Width); j++){
+	      pixelArrangement[j][i][channels] = 0;
+	    }
+	  }
+	}
+
+	//populate the histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      inputHistogram[Imagedata[row][col][channels]][channels]++ ;
+	    }
+	  }
+	}
+
+	//Arrange the pixels in increasing grayscale value
+	int counter = 0;
+	int totalCounter = 0;
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<=255; grayScale++){
+	    for (int row=0; row<Height; row++){
+	      for (int col=0; col<Width; col++){
+		if ((int)Imagedata[row][col][channels] == grayScale){
+		  pixelArrangement[counter][0][channels] = grayScale;
+		  pixelArrangement[counter][1][channels] = row;
+		  pixelArrangement[counter][2][channels] = col;
+		  counter++;
+		  totalCounter++;
+		}
+	      }
+	    }
+	  }
+	  //check for the pixel count mismatch
+	  if (counter!=(int)(Height*Width)){
+	    cout << "total pixel mismatch" << endl;
+	  }
+	  counter = 0;
+	}
+
+	//count the number of pixels per bin
+	int pixelsPerBin = (Height*Width)/256;
+
+	//Redistribute the pixels according to bins
+	int currentPixelVal = 0;
+	counter = 0;
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int i=0; i<(Height*Width); i++){
+	    int row = pixelArrangement[i][1][channels];
+	    int col = pixelArrangement[i][2][channels];
+	    if (counter==pixelsPerBin){
+	      counter=0;
+	      if (currentPixelVal<255){
+		currentPixelVal++;
+	      }
+	    }
+	    newImage[row][col][channels] = (unsigned char)currentPixelVal;
+	    counter++;
+	  }
+	  currentPixelVal=0;
+	  counter = 0;
+	}
+
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+
+// Homework 1
+// This code generates special effect by histogram transform - matching to a gaussian distribution
+// Question 2.c
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 5){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program generates special effect by histogram transform - matching to a gaussian distribution " << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read image (filename specified by first argument) into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create blank new image arrays
+	unsigned char newImage[Height][Width][BytesPerPixel];
+	float tempImage[Height][Width][BytesPerPixel];
+	vector<vector<float> > inputHistogram;
+	vector<vector<float> > targetHistogram;
+	vector<vector<float> > inputCDF;
+	vector<vector<float> > targetCDF;
+	inputHistogram.resize(256);
+	targetHistogram.resize(256);
+	inputCDF.resize(256);
+	targetCDF.resize(256);
+	for (int grayScale=0; grayScale<256; grayScale++){
+	  inputHistogram[grayScale].resize(BytesPerPixel);
+	  targetHistogram[grayScale].resize(BytesPerPixel);
+	  inputCDF[grayScale].resize(BytesPerPixel);
+	  targetCDF[grayScale].resize(BytesPerPixel);
+	}
+
+	//these parameters are observed and taken from the skyline image
+	//the mactching gaussian distribution is obtained with these parameters
+	float sigma[3] = {30.25, 31.34, 35.34};
+	float mean[3] = {163.59, 70.22, 104.79};
+	int lowerLim[3] = {107, 31, 59};
+	int upperLim[3] = {224, 142, 160};
+
+	//initialize the inputHistogram to 0
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<=255; grayScale++){
+	    inputHistogram[grayScale][channels] = 0;
+	  }
+	}
+	
+	//populate the histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      inputHistogram[Imagedata[row][col][channels]][channels]++ ;
+	    }
+	  }
+	}
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<256; grayScale++){
+	    targetHistogram[grayScale][channels] = exp( -1 * pow(grayScale-mean[channels],2)/(2*pow(sigma[channels],2)))/(float)(sqrt(2*M_PI)*sigma[channels]);
+	  }
+	}
+	
+	//Normalize the input histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<=255; grayScale++){
+	    inputHistogram[grayScale][channels] = inputHistogram[grayScale][channels]/(float)(Height*Width);
+	  }
+	}
+
+	//convert it to CDF
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  
+	  inputCDF[0][channels] = inputHistogram[0][channels];
+	  targetCDF[0][channels] = targetHistogram[0][channels];
+	  
+	  for (int grayScale=1; grayScale<=255; grayScale++){
+	   
+	    inputCDF[grayScale][channels] = inputHistogram[grayScale][channels]+inputCDF[grayScale-1][channels];
+	    targetCDF[grayScale][channels] = targetHistogram[grayScale][channels]+targetCDF[grayScale-1][channels];
+	  
+	  }
+	}
+
+	//compute the values for the output histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      
+	      float inputCDFVal = inputCDF[ Imagedata[row][col][channels] ][channels];
+	      float closestMatch = 5000;
+	      float targetCDFGrayScale = 0;
+	      
+	      //find the closest matching point on the cdf (since this is a discrete distribution)
+	      for (int i=lowerLim[channels]; i<=upperLim[channels]; i++){
+		float error = abs(inputCDFVal - targetCDF[i][channels]);
+		if (error<closestMatch){
+		  closestMatch = error;
+		  targetCDFGrayScale = i;
+		}
+	      }
+	      
+	      tempImage[row][col][channels] = targetCDFGrayScale;
+	    
+	    }
+	  }
+	}
+	
+	//Renormalize the values to fit in the 8 bit range
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){	      
+	      newImage[row][col][channels] = (unsigned char)(tempImage[row][col][channels]);
+	    }
+	  }
+	}
+	
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+
+// Homework 1
+// This code performs histogram transform matching it to a gaussian distribution
+// Question 2.d
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 5){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs Histogram transform matching it to a gaussian distribution" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read image (filename specified by first argument) into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create a blank new image arrays
+	unsigned char newImage[Height][Width][BytesPerPixel];
+	float tempImage[Height][Width][BytesPerPixel];
+	vector<vector<float> > inputHistogram;
+	vector<vector<float> > targetHistogram;
+	vector<vector<float> > inputCDF;
+	vector<vector<float> > targetCDF;
+	inputHistogram.resize(256);
+	targetHistogram.resize(256);
+	inputCDF.resize(256);
+	targetCDF.resize(256);
+	for (int grayScale=0; grayScale<256; grayScale++){
+	  inputHistogram[grayScale].resize(BytesPerPixel);
+	  targetHistogram[grayScale].resize(BytesPerPixel);
+	  inputCDF[grayScale].resize(BytesPerPixel);
+	  targetCDF[grayScale].resize(BytesPerPixel);
+	}
+
+	//parameters from the question
+	int sigma = 40;
+	int mean = 125;
+
+	//initialize the inputHistogram 0
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<=255; grayScale++){
+	    inputHistogram[grayScale][channels] = 0;
+	  }
+	}
+	
+	//populate the histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      inputHistogram[Imagedata[row][col][channels]][channels]++ ;
+	    }
+	  }
+	}
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<256; grayScale++){
+	    targetHistogram[grayScale][channels] = (float)exp( -1 * pow(grayScale-mean,2)/(2*pow(sigma,2)))/(float)(sqrt(2*M_PI)*sigma);
+	  }
+	}
+	
+	//Normalize the input histogram
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int grayScale=0; grayScale<=255; grayScale++){
+	    inputHistogram[grayScale][channels] = inputHistogram[grayScale][channels]/(float)(Height*Width);
+	  }
+	}
+
+	//convert it to CDF
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  inputCDF[0][channels] = inputHistogram[0][channels];
+	  targetCDF[0][channels] = targetHistogram[0][channels];
+	  for (int grayScale=1; grayScale<=255; grayScale++){
+	    inputCDF[grayScale][channels] = inputHistogram[grayScale][channels]+inputCDF[grayScale-1][channels];
+	    targetCDF[grayScale][channels] = targetHistogram[grayScale][channels]+targetCDF[grayScale-1][channels];
+	  }
+	}
+
+	//compute the values for the output histogram
+	float min = 5000;
+	float max = -1;
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      float inputCDFVal = inputCDF[ Imagedata[row][col][channels] ][channels];
+	      float closestMatch = 5000;
+	      float targetCDFGrayScale = 0;
+	      for (int i=0; i<256; i++){
+		float error = abs(inputCDFVal - targetCDF[i][channels]);
+		if (error<closestMatch){
+		  closestMatch = error;
+		  targetCDFGrayScale = i;
+		}
+	      }
+	      tempImage[row][col][channels] = targetCDFGrayScale;
+	      if (targetCDFGrayScale<min)
+		min = targetCDFGrayScale;
+	      if (targetCDFGrayScale>max)
+		max = targetCDFGrayScale;
+	    }
+	  }
+	}
+	
+	//Renormalize the values to fit in the 8 bit range
+	for (int channels=0; channels<BytesPerPixel; channels++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){	      
+	      newImage[row][col][channels] = (unsigned char)(255*(tempImage[row][col][channels]-min)/(max-min));
+	    }
+	  }
+	}
+	
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+
+
+// Homework 1
+// This code attempts to remove mixed noise from an image.
+// Question 3.a
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+//the median filtering function. The filter is + shaped
+int medianFiltering(vector<vector <int> > array, int row, int col){
+
+  int medianArray[9] = {array[row-2][col], array[row-1][col], array[row][col], array[row+1][col], array[row+2][col], array[row][col-2], array[row][col-1], array[row][col+1], array[row][col+2]};
+  
+  sort(medianArray, medianArray+9);
+
+  return medianArray[4];
+}
+
+int linearFiltering(vector<vector <int> > array, int row, int col){
+
+  int windowArraySum = array[row-2][col-2] + array[row-1][col] + array[row-1][col+1] + array[row][col-1] + array[row][col] + array[row][col+1] + array[row+1][col-1] + array[row+1][col] + array[row+1][col+1];
+  int mean = windowArraySum/9.0;
+
+  return mean;
+
+}
+
+int gaussianFiltering(vector<vector <int> > array, int row, int col){
+
+  int windowArraySum = array[row-2][col-2] + 2*array[row-1][col] + array[row-1][col+1] + 2*array[row][col-1] + 4*array[row][col] + 2*array[row][col+1] + array[row+1][col-1] + 2*array[row+1][col] + array[row+1][col+1];
+  int mean = windowArraySum/16.0;
+
+  return mean;
+
+}
+
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 5){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs denoising" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_noisy_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read noisyImage into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create blank new image arrays
+	unsigned char newImage[Height][Width][BytesPerPixel];
+
+	//create a temporaryImage for use between different filtering
+	vector<vector<vector <int> > > tempImage;
+	vector<vector<vector <int> > > tempImage2;
+	tempImage.resize(Height);
+	tempImage2.resize(Height);
+	for (int row=0; row<Height; row++){
+	  tempImage[row].resize(Width);
+	  tempImage2[row].resize(Width);
+	  for (int col=0; col<Width; col++){
+	    tempImage[row][col].resize(BytesPerPixel);
+	    tempImage2[row][col].resize(BytesPerPixel);
+	  }
+	}
+
+	//perform median filtering on the image
+	for (int channel=0; channel<BytesPerPixel; channel++){
+	  
+	  //create temporary padded image
+	  vector<vector<int> > temp4Image; //temporary image with 4 rows and 4 cols padded
+	  temp4Image.resize(Height+4);
+	  for (int i=0; i<(Height+4); i++){
+	    temp4Image[i].resize(Width+4);
+	  }
+
+	  //populate the temporary image
+	  for (int row=0; row<(Height+4); row++){
+	    for (int col=0; col<(Width+4); col++){
+	      //pad 0's to edges of the image
+	      if (row==0 || row==1 || col==0 || col==1 || row==Height+2 || row==Height+3 || col==Width+2 || col==Width+3)
+		temp4Image[row][col] = 0;
+	      else
+		temp4Image[row][col] = Imagedata[row-2][col-2][channel];
+	    }
+	  }
+
+	  //perform median filtering
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      tempImage[row][col][channel] = (int)medianFiltering(temp4Image, row+2, col+2);
+		}
+	  }
+	  cout << "Median Filtering: Channel " << channel << " done " << endl;
+	}//end of median filtering channel loop
+
+	
+	//perform gaussian filtering on the image
+	for (int channel=0; channel<BytesPerPixel; channel++){
+	  
+	  //create temporary padded image
+	  vector<vector<int> > temp4Image; //temporary image with 4 rows and 4 cols padded
+	  temp4Image.resize(Height+4);
+	  for (int i=0; i<(Height+4); i++){
+	    temp4Image[i].resize(Width+4);
+	  }
+
+	  //populate the temporary image
+	  for (int row=0; row<(Height+4); row++){
+	    for (int col=0; col<(Width+4); col++){
+	      if (row==0 || row==1 || col==0 || col==1 || row==Height+2 || row==Height+3 || col==Width+2 || col==Width+3)
+		temp4Image[row][col] = 0;
+	      else
+		temp4Image[row][col] = tempImage[row-2][col-2][channel];
+	    }
+	  }
+
+	  //perform median filtering and store the resutl in newImage
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      newImage[row][col][channel] = (unsigned char)gaussianFiltering(temp4Image, row+2, col+2);
+		}
+	  }
+	  cout << "Gaussian Filtering: Channel " << channel << " done " << endl;
+	}//end of first gaussian filtering channel loop
+
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+// Homework 1
+// This code measures PSNR
+// Question 3.a
+// This code takes 6 arguments in the following format
+// program_name input_image.raw input_clean_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 6){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program measures PSNR" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_noisy_image.raw input_clean_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+	unsigned char cleanImage[Height][Width][BytesPerPixel];
+
+	// Read noisyImage into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	// Read cleanImage into image data matrix
+	if (!(file=fopen(argv[2],"rb"))) {
+		cout << "Cannot open file: " << argv[2] <<endl;
+		exit(1);
+	}
+	fread(cleanImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	for (int channel=0; channel<BytesPerPixel; channel++){
+
+	  float MSE = 0;
+	  
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      MSE += pow(cleanImage[row][col][channel] - Imagedata[row][col][channel], 2);
+	    }
+	  }
+	
+	  MSE = MSE/(Height*Width);
+	  
+	  float noise = 10*log10( pow(255, 2)/MSE );	
+	  
+	  cout << "The PSNR for channel " << channel << " is " << noise << endl;
+
+	}
+	
+}
+
+
+// Homework 1
+// This code attempts implements NLM
+// Question 3.b
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	int searchSize = 10;
+	int winSize = 3;
+	int sigma = 1;
+	
+	// Check for proper syntax
+	if (argc < 9){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs denoising" << endl;
+		cout << "You must have 9 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [searchSize = 10] [winSize = 3] [sigma = 1]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	  searchSize = atoi(argv[6]);
+	  winSize = atoi(argv[7]);
+	  sigma = atoi(argv[8]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read noisyImage into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create blank new image arrays
+	unsigned char newImage[Height][Width][BytesPerPixel];
+
+	//value of h according to paper
+	int h = 10*sigma;	
+	int pixelsPerWindow = (2*winSize+1)*(2*winSize+1);
+
+	//get a copy of the input image with 0's padded to boundaries
+	int paddingNeeded = 2*winSize;
+	vector<vector<vector<int> > > temp4Image; //temporary Image initialization
+	temp4Image.resize(Height + paddingNeeded);
+	for (int i=0; i<(Height+paddingNeeded); i++){
+	  temp4Image[i].resize(Width + paddingNeeded);
+	  for (int j=0; j<(Width+paddingNeeded); j++){
+	    temp4Image[i][j].resize(BytesPerPixel);
+	  }
+	}
+	cout << "Temporary image matrix created " << endl;
+
+	//populate the temporary image
+	for (int channel=0; channel<BytesPerPixel; channel++){
+	  for (int row=0; row<(Height+paddingNeeded); row++){
+	    for (int col=0; col<(Width+paddingNeeded); col++){
+	      //0's padded on edges
+	      bool notOnEdge = true;
+	      //check if on edge
+	      for (int i=0; i<winSize; i++){
+		if (i==row){
+		  temp4Image[row][col][channel] = 0;
+		  notOnEdge = false;
+		}
+		else if (i==col){
+		  temp4Image[row][col][channel] = 0;
+		  notOnEdge = false;
+		}
+	      }
+	      //check if not on edge
+	      if (notOnEdge)
+		temp4Image[row][col][channel] = Imagedata[row-winSize][col-winSize][channel];
+	    }
+	  }
+	}
+	cout << "Temporary image matrix populated " << endl;
+
+	//loop through all the pixels of the image
+	for (int iRow=winSize; iRow<(Height+winSize); iRow++){
+	  for (int iCol=winSize; iCol<(Width+winSize); iCol++){
+	    
+	    //get the coordinates for the area to search in the image
+	    //searching over entire image is computationally expensive
+	    int startRow = max(iRow - searchSize, winSize);
+	    int endRow = min(iRow + searchSize, Height+winSize-1);
+	    int startCol = max(iCol - searchSize, winSize);
+	    int endCol = min(iCol + searchSize, Width+winSize-1);
+
+	    //some intermediate variables
+	    float Zi = 0;
+	    float finalPixelVal[BytesPerPixel];
+	    for (int channel=0; channel<BytesPerPixel; channel++)
+	      finalPixelVal[channel] = 0;
+	    
+	    //iterate over the search space for similar windows
+	    for (int jRow=startRow; jRow<=endRow; jRow++){
+	      for (int jCol=startCol; jCol<=endCol; jCol++){
+
+		float eucDist = 0;
+		
+		//in each window find the euclidian distance
+		for (int row=-1*winSize; row<=winSize; row++){
+		  for (int col=-1*winSize; col<=winSize; col++){
+		    for (int channel=0; channel<BytesPerPixel; channel++){
+		      //cout << "Here 1 " << endl;
+		      //cout << iRow+row << " " << iCol+col << " " << channel << " " << jRow+row << " " << jCol+col << endl;
+		      float diff = temp4Image[iRow+row][iCol+col][channel] - temp4Image[jRow+row][jCol+col][channel];
+		      //cout<< "Here 2 " << endl;
+		       eucDist += pow(diff,2);
+		    }
+		  }
+		}
+		
+		//apply the exponent to the distance computed above
+		float dist_ij = (float)eucDist/(pixelsPerWindow*BytesPerPixel);
+		float Wij = (float)exp( -1*max(dist_ij-pow(2*sigma,2), 0.0)/pow(h,2) );
+
+		//update the sum of weight
+		Zi += Wij;
+		
+		//start modifying the final pixel Val
+		for (int channel=0; channel<BytesPerPixel; channel++){
+		  finalPixelVal[channel] += temp4Image[jRow][jCol][channel]*Wij;
+		}
+
+	      }
+	    }
+	    
+	    //store the final computed values in the image after normalizing with the sum of weight
+	    for (int channel=0; channel<BytesPerPixel; channel++){
+	      newImage[iRow-winSize][iCol-winSize][channel] = (unsigned char)(finalPixelVal[channel]/Zi);
+	    }
+	    
+	  }
+	}
+
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}

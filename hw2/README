@@ -1,0 +1,71 @@
+# EE569 Homework Assignment #2
+# Date: Oct 9, 2016
+# Name: Ekraam Sabir
+# ID: 1428-2892-90
+# email: esabir@usc.edu
+#
+# Compiled on Linux Ubuntu 14.04 LTS with gcc
+# Define compiler and linker
+
+
+CC=compile
+CFLAGS=-g -Wall
+LN=g++
+
+All: geometWarp puzzle homographicTrans dithering errDiff rice shape
+
+geometWarp: geometWarp.cpp
+	@echo "Compiling geometWarp.cpp"
+	$(CC) $(CFLAGS) -w -c geometWarp.cpp
+	$(LN) -o geometWarp geometWarp.o
+	@echo "Question 1 - a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./geometWarp program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]"
+
+puzzle: puzzle.cpp
+	@echo "compiling puzzle.cpp"
+	$(CC) $(CFLAGS) -w -c puzzle.cpp
+	$(LN) -o puzzle puzzle.o
+	@echo "Question 1 - b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./puzzle program_name piece_image.raw hillary_image.raw trump_image.raw output_hillary_image.raw output_trump_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [BytesPerPixel_hillary = 1] [Width_hillary = 256] [Height_hillary = 256] [BytesPerPixel_trump = 1] [Width_trump = 256] [Height_trump = 256]"
+
+homographicTrans: homographicTrans.cpp
+	@echo "Compiling homographicTrans.cpp"
+	$(CC) $(CFLAGS) -w -c homographicTrans.cpp
+	$(LN) -o homographicTrans homographicTrans.o
+	@echo "Question 1 - c"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./homographicTrans program_name input_image.raw logo_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [BytesPerPixel_Logo = 1] [Width_Logo = 256] [Height_Logo = 256] [background = 1]"
+
+dithering: dithering.cpp
+	@echo "Compiling dithering.cpp"
+	$(CC) $(CFLAGS) -w -c dithering.cpp
+	$(LN) -o dithering dithering.o
+	@echo "Question 2 - a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./dithering program_name input_image.raw output_image.raw [Width = 256] [Height = 256] [option = I2/I4/I8/A4/GL4]"
+
+errDiff: errDiff.cpp
+	@echo "Compiling errDiff.cpp"
+	$(CC) $(CFLAGS) -w -c errDiff.cpp
+	$(LN) -o errDiff errDiff.o
+	@echo "Question 2 - b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./errDiff program_name input_image.raw output_image.raw [Width = 256] [Height = 256] [option = FS/JJN/ST]"
+
+rice: rice.cpp
+	@echo "Compiling rice.cpp"
+	$(CC) $(CFLAGS) -w -c rice.cpp
+	$(LN) -o rice rice.o
+	@echo "Question 3 - a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./rice program_name input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]"
+
+shape: shape.cpp
+	@echo "Compiling shape.cpp"
+	$(CC) $(CFLAGS) -w -c shape.cpp
+	$(LN) -o shape shape.o
+	@echo "Question 3 - b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "./shape program_name butterfly_image.raw fly_image.raw probe_image.raw outputButterfly_image.raw outputFly_image.raw outputProbe_image.raw [Width_butterfly = 256] [Height_butterfly = 256] [Width_fly = 256] [Height_fly = 256] [Width_probe = 256] [Height_probe = 256]"

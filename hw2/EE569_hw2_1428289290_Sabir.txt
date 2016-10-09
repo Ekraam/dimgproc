@@ -1,0 +1,3307 @@
+// Homework 2
+// This code implements spatial transform of diamond shape on input image
+// Question 1.a
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel;
+	int Height = 256;
+	int Width = 256;
+	
+	// Check for proper syntax
+	if (argc < 6){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs geometric transform" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+
+	// Read noisyImage into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create blank new image arrays
+	unsigned char newImage[Height][Width][BytesPerPixel];
+
+	//populate image with 0's
+	for (int channel=0; channel<3; channel++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      newImage[row][col][channel] = 0;
+	    }
+	  }
+	}
+
+	//first quadrant transform
+	int diagonalPixel = 0;
+	for (int row=0; row<=149; row++){
+	  diagonalPixel++;
+	  double conversionRatio = 150.0/diagonalPixel;
+	  for (int col=150; col<(150+diagonalPixel); col++){
+	    int multiplier = col-150;
+	    newImage[row][col][0] = Imagedata[row][150+int(multiplier*conversionRatio)][0];
+	    newImage[row][col][1] = Imagedata[row][150+int(multiplier*conversionRatio)][1];
+	    newImage[row][col][2] = Imagedata[row][150+int(multiplier*conversionRatio)][2];
+	  }
+	}
+	    
+	//second quadrant transform
+	diagonalPixel = 0;
+	for (int row=0; row<=149; row++){
+	  diagonalPixel++;
+	  double conversionRatio = 150.0/diagonalPixel;
+	  for (int col=149; col>(149-diagonalPixel); col--){
+	    int multiplier = 149-col;
+	    newImage[row][col][0] = Imagedata[row][149-int(multiplier*conversionRatio)][0];
+	    newImage[row][col][1] = Imagedata[row][149-int(multiplier*conversionRatio)][1];
+	    newImage[row][col][2] = Imagedata[row][149-int(multiplier*conversionRatio)][2];
+	  }
+	  //cout << diagonalPixel << " " << conversionRatio  << endl;
+	}
+
+	//third quadrant transform
+	diagonalPixel = 150;
+	for (int row=150; row<=299; row++){
+	  diagonalPixel--;
+	  double conversionRatio = 150.0/diagonalPixel;
+	  for (int col=149; col>(149-diagonalPixel); col--){
+	    int multiplier = 149-col;
+	    newImage[row][col][0] = Imagedata[row][149-int(multiplier*conversionRatio)][0];
+	    newImage[row][col][1] = Imagedata[row][149-int(multiplier*conversionRatio)][1];
+	    newImage[row][col][2] = Imagedata[row][149-int(multiplier*conversionRatio)][2];
+	  }
+	}
+
+	//fourth quadrant transform
+	diagonalPixel = 150;
+	for (int row=150; row<=299; row++){
+	  diagonalPixel--;
+	  double conversionRatio = 150.0/diagonalPixel;
+	  for (int col=150; col<(150+diagonalPixel); col++){
+	    int multiplier = col-150;
+	    newImage[row][col][0] = Imagedata[row][150+int(multiplier*conversionRatio)][0];
+	    newImage[row][col][1] = Imagedata[row][150+int(multiplier*conversionRatio)][1];
+	    newImage[row][col][2] = Imagedata[row][150+int(multiplier*conversionRatio)][2];
+	  }
+	}
+	
+
+	// Write image data (filename specified by second argument) from image data matrix
+
+	if (!(file=fopen(argv[2],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+// Homework 2
+// This code matches puzzle pieces to their respective locations in the target image
+// Question 1.b
+// This code takes 15 arguments in the following format
+// program_name piece_image.raw hillary_image.raw trump_image.raw output_hillary_image.raw output_trump_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [BytesPerPixel_hillary = 1] [Width_hillary = 256] [Height_hillary = 256] [BytesPerPixel_trump = 1] [Width_trump = 256] [Height_trump = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{ 
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel = 3;
+	int Height = 256;
+	int Width = 256;
+	int BytesPerPixel_hillary = 3;
+	int Height_hillary = 256;
+	int Width_hillary = 256;
+	int BytesPerPixel_trump = 3;
+	int Height_trump = 256;
+	int Width_trump = 256;
+	
+	// Check for proper syntax
+	if (argc < 15){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program matches puzzle pieces to their respective locations in the target image" << endl;
+		cout << "You must have 11 arguments in the following format" << endl;
+		cout << "program_name piece_image.raw hillary_image.raw trump_image.raw output_hillary_image.raw output_trump_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [BytesPerPixel_hillary = 1] [Width_hillary = 256] [Height_hillary = 256] [BytesPerPixel_trump = 1] [Width_trump = 256] [Height_trump = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[6]);
+	  Width = atoi(argv[7]);
+	  Height = atoi(argv[8]);
+	  BytesPerPixel_hillary = atoi(argv[9]);
+	  Width_hillary = atoi(argv[10]);
+	  Height_hillary = atoi(argv[11]);
+	  BytesPerPixel_trump = atoi(argv[12]);
+	  Width_trump = atoi(argv[13]);
+	  Height_trump = atoi(argv[14]);
+	}
+	
+	// Allocate image data array
+	unsigned char pieceImage[Height][Width][BytesPerPixel];
+	unsigned char hillaryImage[Height_hillary][Width_hillary][BytesPerPixel_hillary];
+	unsigned char trumpImage[Height_trump][Width_trump][BytesPerPixel_trump];
+
+	// Read Image into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(pieceImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	// Read hillary image into image data matrix
+	if (!(file=fopen(argv[2],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(hillaryImage, sizeof(unsigned char), Height_hillary*Width_hillary*BytesPerPixel_hillary, file);
+	fclose(file);
+
+	// Read trump image into image data matrix
+	if (!(file=fopen(argv[3],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(trumpImage, sizeof(unsigned char), Height_trump*Width_trump*BytesPerPixel_trump, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+
+	//create blank new image arrays
+	unsigned char outputHillaryImage[Height_hillary][Width_hillary][BytesPerPixel_hillary];
+	unsigned char outputTrumpImage[Height_trump][Width_trump][BytesPerPixel_trump];
+
+	//create intensity profile histograms
+	vector<int> pieceVertical;
+	pieceVertical.resize(Width);
+	vector<int> pieceHorizontal;
+	pieceHorizontal.resize(Height);
+
+	//populate with 0's
+	for (int col=0; col<Width; col++)
+	  pieceVertical[col] = 0;
+	for (int row=0; row<Height; row++)
+	  pieceHorizontal[row] = 0;
+
+	//sum vertical intensity values across all 3 channels
+	for (int col=0; col<Width; col++){
+	  for (int row=0; row<Height; row++){
+	    for (int channel=0; channel<3; channel++){
+	      pieceVertical[col] += pieceImage[row][col][channel];
+	    }
+	  }
+	}
+
+	//sum horizontal intensity values across all 3 channels
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    for (int channel=0; channel<3; channel++){
+	      pieceHorizontal[row] += pieceImage[row][col][channel];
+	    }
+	  }
+	}
+
+	// find the four coordinates according to intensity profile	
+	//vertical Col Values
+	int verticalCol[4] = {0, 0, 0, 0};
+	for (int col=1; col<Width-1; col++){
+
+	  if (pieceVertical[col-1]==(765*Height) && pieceVertical[col]!=(765*Height) && verticalCol[0]==0)
+	    verticalCol[0] = col;
+	  else if (pieceVertical[col-1]==(765*Height) && pieceVertical[col]!=(765*Height) && verticalCol[0]!=0)
+	    verticalCol[2] = col;
+	  else if (pieceVertical[col]!=(765*Height) && pieceVertical[col+1]==(765*Height) && verticalCol[1]==0)
+	    verticalCol[1] = col;
+	  else if (pieceVertical[col]!=(765*Height) && pieceVertical[col+1]==(765*Height) && verticalCol[1]!=0)
+	    verticalCol[3] = col;
+	  
+	}
+
+	//horizontal Row Values
+	int horizontalRow[4] = {0, 0, 0, 0};
+	for (int row=1; row<Height-1; row++){
+	  
+	  if (pieceHorizontal[row-1]==(765*Width) && pieceHorizontal[row]!=(765*Width) && horizontalRow[0]==0)
+	    horizontalRow[0] = row;
+	  else if (pieceHorizontal[row-1]==(765*Width) && pieceHorizontal[row]!=(765*Width) && horizontalRow[0]!=0)
+	    horizontalRow[2] = row;
+	  else if (pieceHorizontal[row]!=(765*Width) && pieceHorizontal[row+1]==(765*Width) && horizontalRow[1]==0)
+	    horizontalRow[1] = row;
+	  else if (pieceHorizontal[row]!=(765*Width) && pieceHorizontal[row+1]==(765*Width) && horizontalRow[1]!=0)
+	    horizontalRow[3] = row;
+
+	}
+
+	//find the corresponding row values for vertical coordinates
+	int lowestPixelSum = 1000;
+	int verticalRow[4] = {0, 0, 0, 0};
+	for (int i=0; i<4; i++){
+	  int col = verticalCol[i];
+	  for (int row=0; row<Height; row++){
+	    int pixelSum = pieceImage[row][col][0] + pieceImage[row][col][1] + pieceImage[row][col][2];
+	    if (pixelSum<lowestPixelSum){
+    	      verticalRow[i] = row;
+	      lowestPixelSum = pixelSum;
+	    }
+	  }
+	  lowestPixelSum = 1000;
+	}
+
+	//find the corresponding col values for horizontal coordinates
+	int horizontalCol[4] = {0, 0, 0, 0};
+	for (int i=0; i<4; i++){
+	  int row = horizontalRow[i];
+	  for (int col=0; col<Width; col++){
+	    int pixelSum = pieceImage[row][col][0] + pieceImage[row][col][1] + pieceImage[row][col][2];
+	    if (pixelSum<lowestPixelSum){
+	      horizontalCol[i] = col;
+	      lowestPixelSum = pixelSum;
+	    }
+	  }
+	  lowestPixelSum = 1000;
+	}
+
+	cout << "Hillary piece image coordinates in clockwise - Row,Col or Height,Width" << endl;
+	cout << verticalRow[0] << "," << verticalCol[0] << endl;
+	cout << horizontalRow[0] << "," << horizontalCol[0] << endl;
+	cout << verticalRow[1] << "," << verticalCol[1] << endl;
+	cout << horizontalRow[1] << "," << horizontalCol[1] << endl;
+
+	cout << "Trump piece image coordinates in clockwise - Row,Col or Height,Width" << endl;
+	cout << verticalRow[2] << "," << verticalCol[2] << endl;
+	cout << horizontalRow[2] << "," << horizontalCol[2] << endl;
+	cout << verticalRow[3] << "," << verticalCol[3] << endl;
+	cout << horizontalRow[3] << "," << horizontalCol[3] << endl;
+
+	//moving to finding coordinates of hillary and trump images
+	
+	//make 2d matrices of hillary and trump
+	vector<vector <int> > hillary;
+	vector<vector <int> > trump;
+	hillary.resize(Height_hillary);
+	for (int row=0; row<Height_hillary; row++){
+	  hillary[row].resize(Width_hillary);
+	}
+	trump.resize(Height_trump);
+	for (int row=0; row<Height_trump; row++){
+	  trump[row].resize(Width_trump);
+	}
+
+	// fill the matrices with binary values depending if the input image pixel is pure white or not
+	for (int row=0; row<Height_hillary; row++){
+	  for (int col=0; col<Width_hillary; col++){
+	    int pixelSum = hillaryImage[row][col][0]+hillaryImage[row][col][1]+hillaryImage[row][col][2];
+	    if (pixelSum == 765)
+	      hillary[row][col] = 1;
+	    else
+	      hillary[row][col] = 0;
+	  }
+	}
+	for (int row=0; row<Height_trump; row++){
+	  for (int col=0; col<Width_trump; col++){
+	    int pixelSum = trumpImage[row][col][0]+trumpImage[row][col][1]+trumpImage[row][col][2];
+	    if (pixelSum == 765)
+	      trump[row][col] = 1;
+	    else
+	      trump[row][col] = 0;
+	  }
+	}
+
+	// corner detection filters for the image
+	int filter_topleft[9] = {0, 0, 0, 0, 1, 1, 0, 1, 1};
+	int filter_topright[9] = {0, 0, 0, 1, 1, 0, 1, 1, 0};
+	int filter_bottomright[9] = {1, 1, 0, 1, 1, 0, 0, 0, 0};
+	int filter_bottomleft[9] = {0, 1, 1, 0, 1, 1, 0, 0, 0};
+
+	// run filters over the binary image to find white corners
+	int hillary_row[4] = {0, 0, 0, 0};
+	int hillary_col[4] = {0, 0, 0, 0};
+	int trump_row[4] = {0, 0, 0, 0};
+	int trump_col[4] = {0, 0, 0, 0};
+
+	// hillary corner coordinates
+	for (int row=1; row<Height_hillary-1; row++){
+	  for (int col=1; col<Width_hillary-1; col++){
+
+	    if (hillary[row-1][col-1]==filter_topleft[0] && hillary[row-1][col]==filter_topleft[1] && hillary[row-1][col+1]==filter_topleft[2] && hillary[row][col-1]==filter_topleft[3] && hillary[row][col]==filter_topleft[4] && hillary[row][col+1]==filter_topleft[5] && hillary[row+1][col-1]==filter_topleft[6] && hillary[row+1][col]==filter_topleft[7] && hillary[row+1][col+1]==filter_topleft[8]){
+	      hillary_row[0] = row;
+	      hillary_col[0] = col;
+	    }
+
+	    if (hillary[row-1][col-1]==filter_topright[0] && hillary[row-1][col]==filter_topright[1] && hillary[row-1][col+1]==filter_topright[2] && hillary[row][col-1]==filter_topright[3] && hillary[row][col]==filter_topright[4] && hillary[row][col+1]==filter_topright[5] && hillary[row+1][col-1]==filter_topright[6] && hillary[row+1][col]==filter_topright[7] && hillary[row+1][col+1]==filter_topright[8]){
+	      hillary_row[1] = row;
+	      hillary_col[1] = col;
+	    }
+
+	    if (hillary[row-1][col-1]==filter_bottomright[0] && hillary[row-1][col]==filter_bottomright[1] && hillary[row-1][col+1]==filter_bottomright[2] && hillary[row][col-1]==filter_bottomright[3] && hillary[row][col]==filter_bottomright[4] && hillary[row][col+1]==filter_bottomright[5] && hillary[row+1][col-1]==filter_bottomright[6] && hillary[row+1][col]==filter_bottomright[7] && hillary[row+1][col+1]==filter_bottomright[8]){
+	      hillary_row[2] = row;
+	      hillary_col[2] = col;
+	    }
+
+	    if (hillary[row-1][col-1]==filter_bottomleft[0] && hillary[row-1][col]==filter_bottomleft[1] && hillary[row-1][col+1]==filter_bottomleft[2] && hillary[row][col-1]==filter_bottomleft[3] && hillary[row][col]==filter_bottomleft[4] && hillary[row][col+1]==filter_bottomleft[5] && hillary[row+1][col-1]==filter_bottomleft[6] && hillary[row+1][col]==filter_bottomleft[7] && hillary[row+1][col+1]==filter_bottomleft[8]){
+	      hillary_row[3] = row;
+	      hillary_col[3] = col;
+	    }
+	  }
+	}
+
+	// trump corner coordinates
+	for (int row=1; row<Height_trump-1; row++){
+	  for (int col=1; col<Width_trump-1; col++){
+
+	    if (trump[row-1][col-1]==filter_topleft[0] && trump[row-1][col]==filter_topleft[1] && trump[row-1][col+1]==filter_topleft[2] && trump[row][col-1]==filter_topleft[3] && trump[row][col]==filter_topleft[4] && trump[row][col+1]==filter_topleft[5] && trump[row+1][col-1]==filter_topleft[6] && trump[row+1][col]==filter_topleft[7] && trump[row+1][col+1]==filter_topleft[8]){
+	      trump_row[0] = row;
+	      trump_col[0] = col;
+	    }
+
+	    if (trump[row-1][col-1]==filter_topright[0] && trump[row-1][col]==filter_topright[1] && trump[row-1][col+1]==filter_topright[2] && trump[row][col-1]==filter_topright[3] && trump[row][col]==filter_topright[4] && trump[row][col+1]==filter_topright[5] && trump[row+1][col-1]==filter_topright[6] && trump[row+1][col]==filter_topright[7] && trump[row+1][col+1]==filter_topright[8]){
+	      trump_row[1] = row;
+	      trump_col[1] = col;
+	    }
+
+	    if (trump[row-1][col-1]==filter_bottomright[0] && trump[row-1][col]==filter_bottomright[1] && trump[row-1][col+1]==filter_bottomright[2] && trump[row][col-1]==filter_bottomright[3] && trump[row][col]==filter_bottomright[4] && trump[row][col+1]==filter_bottomright[5] && trump[row+1][col-1]==filter_bottomright[6] && trump[row+1][col]==filter_bottomright[7] && trump[row+1][col+1]==filter_bottomright[8]){
+	      trump_row[2] = row;
+	      trump_col[2] = col;
+	    }
+
+	    if (trump[row-1][col-1]==filter_bottomleft[0] && trump[row-1][col]==filter_bottomleft[1] && trump[row-1][col+1]==filter_bottomleft[2] && trump[row][col-1]==filter_bottomleft[3] && trump[row][col]==filter_bottomleft[4] && trump[row][col+1]==filter_bottomleft[5] && trump[row+1][col-1]==filter_bottomleft[6] && trump[row+1][col]==filter_bottomleft[7] && trump[row+1][col+1]==filter_bottomleft[8]){
+	      trump_row[3] = row;
+	      trump_col[3] = col;
+	    }
+	  }
+	}
+
+	//print the coordinates found in the target image
+	cout << "Hillary target image coordinates in clockwise - Row,Col or Height,Width" << endl;
+	cout << hillary_row[0] << "," << hillary_col[0] << endl;
+	cout << hillary_row[1] << "," << hillary_col[1] << endl;
+	cout << hillary_row[2] << "," << hillary_col[2] << endl;
+	cout << hillary_row[3] << "," << hillary_col[3] << endl;
+	cout << "Trump target image coordinates in clockwise - Row,Col or Height,Width" << endl;
+	cout << trump_row[0] << "," << trump_col[0] << endl;
+	cout << trump_row[1] << "," << trump_col[1] << endl;
+	cout << trump_row[2] << "," << trump_col[2] << endl;
+	cout << trump_row[3] << "," << trump_col[3] << endl;
+
+	//inverse hillary address mapping matrix
+	double hillaryInv[6] = {1.4545, 0.3939, -207.5152, -0.4040, 1.4646, -102.8384};
+	
+	for (int row=0; row<Height_hillary; row++){
+	  for (int col=0; col<Width_hillary; col++){
+	    
+	    if (row<=hillary_row[3] && row>=hillary_row[0] && col<=hillary_col[1] && col>=hillary_col[0]){
+
+	      double pieceRow = hillaryInv[0]*row + hillaryInv[1]*col + hillaryInv[2];
+	      double pieceCol = hillaryInv[3]*row + hillaryInv[4]*col + hillaryInv[5];
+	      
+	      // coordinates of surrounding pixels
+	      int row1 = int(floor(pieceRow));
+	      int row2 = int(ceil(pieceRow));
+	      int col1 = int(floor(pieceCol));
+	      int col2 = int(ceil(pieceCol));
+	      
+	      double a = pieceRow - row1;
+	      double b = pieceCol - col1; 
+	      
+	      // corresponding pixel values from the piece image
+	      int red = (int)((1-b)*((1-a)*pieceImage[row1][col1][0] + a*pieceImage[row2][col1][0]) + (b)*((1-a)*pieceImage[row1][col2][0] + a*pieceImage[row2][col2][0]));
+	      int green = (int)((1-b)*((1-a)*pieceImage[row1][col1][1] + a*pieceImage[row2][col1][1]) + (b)*((1-a)*pieceImage[row1][col2][1] + a*pieceImage[row2][col2][1]));
+	      int blue = (int)((1-b)*((1-a)*pieceImage[row1][col1][2] + a*pieceImage[row2][col1][2]) + (b)*((1-a)*pieceImage[row1][col2][2] + a*pieceImage[row2][col2][2]));
+	      
+	      // fill the hole pixels
+	      outputHillaryImage[row][col][0] = (unsigned char)red;
+	      outputHillaryImage[row][col][1] = (unsigned char)green;
+	      outputHillaryImage[row][col][2] = (unsigned char)blue;
+	    }
+	    else{
+	     
+	      // fill the non-hole pixels
+	      outputHillaryImage[row][col][0] = hillaryImage[row][col][0];
+	      outputHillaryImage[row][col][1] = hillaryImage[row][col][1];
+	      outputHillaryImage[row][col][2] = hillaryImage[row][col][2];
+	    }
+
+	  }
+	}
+
+	//inverse trump address mapping matrix
+	double trumpInv[6] = {-0.0707, -0.7475, 509.5253, 0.7475, -0.0707, 144.1212};
+	
+	for (int row=0; row<Height_trump; row++){
+	  for (int col=0; col<Width_trump; col++){
+	    
+	    if (row<=trump_row[3] && row>=trump_row[0] && col<=trump_col[1] && col>=trump_col[0]){
+
+	      double pieceRow = trumpInv[0]*row + trumpInv[1]*col + trumpInv[2];
+	      double pieceCol = trumpInv[3]*row + trumpInv[4]*col + trumpInv[5];
+	      
+	      // coordinates of surrounding pixels
+	      int row1 = int(floor(pieceRow));
+	      int row2 = int(ceil(pieceRow));
+	      int col1 = int(floor(pieceCol));
+	      int col2 = int(ceil(pieceCol));
+	      
+	      double a = pieceRow - row1;
+	      double b = pieceCol - col1; 
+	      
+	      // corresponding pixel values from the piece image
+	      int red = (int)((1-b)*((1-a)*pieceImage[row1][col1][0] + a*pieceImage[row2][col1][0]) + (b)*((1-a)*pieceImage[row1][col2][0] + a*pieceImage[row2][col2][0]));
+	      int green = (int)((1-b)*((1-a)*pieceImage[row1][col1][1] + a*pieceImage[row2][col1][1]) + (b)*((1-a)*pieceImage[row1][col2][1] + a*pieceImage[row2][col2][1]));
+	      int blue = (int)((1-b)*((1-a)*pieceImage[row1][col1][2] + a*pieceImage[row2][col1][2]) + (b)*((1-a)*pieceImage[row1][col2][2] + a*pieceImage[row2][col2][2]));
+	      
+	      // fill the hole pixels
+	      outputTrumpImage[row][col][0] = (unsigned char)red;
+	      outputTrumpImage[row][col][1] = (unsigned char)green;
+	      outputTrumpImage[row][col][2] = (unsigned char)blue;
+	    }
+	    else{
+	     
+	      // fill the non-hole pixels
+	      outputTrumpImage[row][col][0] = trumpImage[row][col][0];
+	      outputTrumpImage[row][col][1] = trumpImage[row][col][1];
+	      outputTrumpImage[row][col][2] = trumpImage[row][col][2];
+	    }
+
+	  }
+	}
+
+	// smoothen the images to merge them
+
+	//hillary
+	int firstCol = hillary_col[0];
+	int secCol = hillary_col[1];
+	//smooth the two columns
+	for (int row=hillary_row[0]; row<hillary_row[3]; row++){
+
+	  outputHillaryImage[row][firstCol][0] = (unsigned char)((outputHillaryImage[row-1][firstCol-1][0] + 2*outputHillaryImage[row][firstCol-1][0] + outputHillaryImage[row+1][firstCol-1][0] + outputHillaryImage[row-1][firstCol+1][0] + 2*outputHillaryImage[row][firstCol+1][0] + outputHillaryImage[row+1][firstCol+1][0])/8.0);
+	  outputHillaryImage[row][firstCol][1] = (unsigned char)((outputHillaryImage[row-1][firstCol-1][1] + 2*outputHillaryImage[row][firstCol-1][1] + outputHillaryImage[row+1][firstCol-1][1] + outputHillaryImage[row-1][firstCol+1][1] + 2*outputHillaryImage[row][firstCol+1][1] + outputHillaryImage[row+1][firstCol+1][1])/8.0);
+	  outputHillaryImage[row][firstCol][2] = (unsigned char)((outputHillaryImage[row-1][firstCol-1][2] + 2*outputHillaryImage[row][firstCol-1][2] + outputHillaryImage[row+1][firstCol-1][2] + outputHillaryImage[row-1][firstCol+1][2] + 2*outputHillaryImage[row][firstCol+1][2] + outputHillaryImage[row+1][firstCol+1][2])/8.0);
+
+	  outputHillaryImage[row][secCol][0] = (unsigned char)((outputHillaryImage[row-1][secCol-1][0] + 2*outputHillaryImage[row][secCol-1][0] + outputHillaryImage[row+1][secCol-1][0] + outputHillaryImage[row-1][secCol+1][0] + 2*outputHillaryImage[row][secCol+1][0] + outputHillaryImage[row+1][secCol+1][0])/8.0);
+	  outputHillaryImage[row][secCol][1] = (unsigned char)((outputHillaryImage[row-1][secCol-1][1] + 2*outputHillaryImage[row][secCol-1][1] + outputHillaryImage[row+1][secCol-1][1] + outputHillaryImage[row-1][secCol+1][1] + 2*outputHillaryImage[row][secCol+1][1] + outputHillaryImage[row+1][secCol+1][1])/8.0);
+	  outputHillaryImage[row][secCol][2] = (unsigned char)((outputHillaryImage[row-1][secCol-1][2] + 2*outputHillaryImage[row][secCol-1][2] + outputHillaryImage[row+1][secCol-1][2] + outputHillaryImage[row-1][secCol+1][2] + 2*outputHillaryImage[row][secCol+1][2] + outputHillaryImage[row+1][secCol+1][2])/8.0);
+
+	}
+
+	int firstRow = hillary_row[0];
+	int secRow = hillary_row[3];
+	//smooth the two rows
+	for (int col=hillary_col[0]; col<hillary_col[1]; col++){
+
+	  outputHillaryImage[firstRow][col][0] = (unsigned char)((outputHillaryImage[firstRow-1][col-1][0] + 2*outputHillaryImage[firstRow-1][col][0] + outputHillaryImage[firstRow-1][col+1][0] + outputHillaryImage[firstRow+1][col-1][0] + 2*outputHillaryImage[firstRow+1][col][0] + outputHillaryImage[firstRow+1][col+1][0])/8.0);
+	  outputHillaryImage[firstRow][col][1] = (unsigned char)((outputHillaryImage[firstRow-1][col-1][1] + 2*outputHillaryImage[firstRow-1][col][1] + outputHillaryImage[firstRow-1][col+1][1] + outputHillaryImage[firstRow+1][col-1][1] + 2*outputHillaryImage[firstRow+1][col][1] + outputHillaryImage[firstRow+1][col+1][1])/8.0);
+	  outputHillaryImage[firstRow][col][2] = (unsigned char)((outputHillaryImage[firstRow-1][col-1][2] + 2*outputHillaryImage[firstRow-1][col][2] + outputHillaryImage[firstRow-1][col+1][2] + outputHillaryImage[firstRow+1][col-1][2] + 2*outputHillaryImage[firstRow+1][col][2] + outputHillaryImage[firstRow+1][col+1][2])/8.0);
+
+	  outputHillaryImage[secRow][col][0] = (unsigned char)((outputHillaryImage[secRow-1][col-1][0] + 2*outputHillaryImage[secRow-1][col][0] + outputHillaryImage[secRow-1][col+1][0] + outputHillaryImage[secRow+1][col-1][0] + 2*outputHillaryImage[secRow+1][col][0] + outputHillaryImage[secRow+1][col+1][0])/8.0);
+	  outputHillaryImage[secRow][col][1] = (unsigned char)((outputHillaryImage[secRow-1][col-1][1] + 2*outputHillaryImage[secRow-1][col][1] + outputHillaryImage[secRow-1][col+1][1] + outputHillaryImage[secRow+1][col-1][1] + 2*outputHillaryImage[secRow+1][col][1] + outputHillaryImage[secRow+1][col+1][1])/8.0);
+	  outputHillaryImage[secRow][col][2] = (unsigned char)((outputHillaryImage[secRow-1][col-1][2] + 2*outputHillaryImage[secRow-1][col][2] + outputHillaryImage[secRow-1][col+1][2] + outputHillaryImage[secRow+1][col-1][2] + 2*outputHillaryImage[secRow+1][col][2] + outputHillaryImage[secRow+1][col+1][2])/8.0);
+
+	}
+
+	//trump
+	firstCol = trump_col[0];
+	secCol = trump_col[1];
+	//smooth the two columns
+	for (int row=trump_row[0]; row<trump_row[3]; row++){
+
+	  outputTrumpImage[row][firstCol][0] = (unsigned char)((outputTrumpImage[row-1][firstCol-1][0] + 2*outputTrumpImage[row][firstCol-1][0] + outputTrumpImage[row+1][firstCol-1][0] + outputTrumpImage[row-1][firstCol+1][0] + 2*outputTrumpImage[row][firstCol+1][0] + outputTrumpImage[row+1][firstCol+1][0])/8.0);
+	  outputTrumpImage[row][firstCol][1] = (unsigned char)((outputTrumpImage[row-1][firstCol-1][1] + 2*outputTrumpImage[row][firstCol-1][1] + outputTrumpImage[row+1][firstCol-1][1] + outputTrumpImage[row-1][firstCol+1][1] + 2*outputTrumpImage[row][firstCol+1][1] + outputTrumpImage[row+1][firstCol+1][1])/8.0);
+	  outputTrumpImage[row][firstCol][2] = (unsigned char)((outputTrumpImage[row-1][firstCol-1][2] + 2*outputTrumpImage[row][firstCol-1][2] + outputTrumpImage[row+1][firstCol-1][2] + outputTrumpImage[row-1][firstCol+1][2] + 2*outputTrumpImage[row][firstCol+1][2] + outputTrumpImage[row+1][firstCol+1][2])/8.0);
+
+	  outputTrumpImage[row][secCol][0] = (unsigned char)((outputTrumpImage[row-1][secCol-1][0] + 2*outputTrumpImage[row][secCol-1][0] + outputTrumpImage[row+1][secCol-1][0] + outputTrumpImage[row-1][secCol+1][0] + 2*outputTrumpImage[row][secCol+1][0] + outputTrumpImage[row+1][secCol+1][0])/8.0);
+	  outputTrumpImage[row][secCol][1] = (unsigned char)((outputTrumpImage[row-1][secCol-1][1] + 2*outputTrumpImage[row][secCol-1][1] + outputTrumpImage[row+1][secCol-1][1] + outputTrumpImage[row-1][secCol+1][1] + 2*outputTrumpImage[row][secCol+1][1] + outputTrumpImage[row+1][secCol+1][1])/8.0);
+	  outputTrumpImage[row][secCol][2] = (unsigned char)((outputTrumpImage[row-1][secCol-1][2] + 2*outputTrumpImage[row][secCol-1][2] + outputTrumpImage[row+1][secCol-1][2] + outputTrumpImage[row-1][secCol+1][2] + 2*outputTrumpImage[row][secCol+1][2] + outputTrumpImage[row+1][secCol+1][2])/8.0);
+
+	}
+
+	firstRow = trump_row[0];
+	secRow = trump_row[3];
+	//smooth the two rows
+	for (int col=trump_col[0]; col<trump_col[1]; col++){
+
+	  outputTrumpImage[firstRow][col][0] = (unsigned char)((outputTrumpImage[firstRow-1][col-1][0] + 2*outputTrumpImage[firstRow-1][col][0] + outputTrumpImage[firstRow-1][col+1][0] + outputTrumpImage[firstRow+1][col-1][0] + 2*outputTrumpImage[firstRow+1][col][0] + outputTrumpImage[firstRow+1][col+1][0])/8.0);
+	  outputTrumpImage[firstRow][col][1] = (unsigned char)((outputTrumpImage[firstRow-1][col-1][1] + 2*outputTrumpImage[firstRow-1][col][1] + outputTrumpImage[firstRow-1][col+1][1] + outputTrumpImage[firstRow+1][col-1][1] + 2*outputTrumpImage[firstRow+1][col][1] + outputTrumpImage[firstRow+1][col+1][1])/8.0);
+	  outputTrumpImage[firstRow][col][2] = (unsigned char)((outputTrumpImage[firstRow-1][col-1][2] + 2*outputTrumpImage[firstRow-1][col][2] + outputTrumpImage[firstRow-1][col+1][2] + outputTrumpImage[firstRow+1][col-1][2] + 2*outputTrumpImage[firstRow+1][col][2] + outputTrumpImage[firstRow+1][col+1][2])/8.0);
+
+	  outputTrumpImage[secRow][col][0] = (unsigned char)((outputTrumpImage[secRow-1][col-1][0] + 2*outputTrumpImage[secRow-1][col][0] + outputTrumpImage[secRow-1][col+1][0] + outputTrumpImage[secRow+1][col-1][0] + 2*outputTrumpImage[secRow+1][col][0] + outputTrumpImage[secRow+1][col+1][0])/8.0);
+	  outputTrumpImage[secRow][col][1] = (unsigned char)((outputTrumpImage[secRow-1][col-1][1] + 2*outputTrumpImage[secRow-1][col][1] + outputTrumpImage[secRow-1][col+1][1] + outputTrumpImage[secRow+1][col-1][1] + 2*outputTrumpImage[secRow+1][col][1] + outputTrumpImage[secRow+1][col+1][1])/8.0);
+	  outputTrumpImage[secRow][col][2] = (unsigned char)((outputTrumpImage[secRow-1][col-1][2] + 2*outputTrumpImage[secRow-1][col][2] + outputTrumpImage[secRow-1][col+1][2] + outputTrumpImage[secRow+1][col-1][2] + 2*outputTrumpImage[secRow+1][col][2] + outputTrumpImage[secRow+1][col+1][2])/8.0);
+
+	  }
+ 
+	// Write image data from image data matrix
+	
+	if (!(file=fopen(argv[4],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(outputHillaryImage, sizeof(unsigned char), Height_hillary*Width_hillary*BytesPerPixel_hillary, file);
+	fclose(file);
+	
+	if (!(file=fopen(argv[5],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(outputTrumpImage, sizeof(unsigned char), Height_trump*Width_trump*BytesPerPixel_trump, file);
+	fclose(file);
+	
+	return 0;
+}
+
+
+// Homework 2
+// This code implements homographic transform and image overlay
+// Question 1.c
+// This code takes 11 arguments in the following format
+// program_name input_image.raw logo_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [BytesPerPixel_Logo = 1] [Width_Logo = 256] [Height_Logo = 256] [background = 1]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{
+	// Define file pointer and variables
+	FILE *file;
+	int BytesPerPixel = 3;
+	int Height = 256;
+	int Width = 256;
+	int BytesPerPixel_logo = 3;
+	int Height_logo = 256;
+	int Width_logo = 256;
+	int background = 0;
+	
+	// Check for proper syntax
+	if (argc < 11){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs homographic transformation for image overlay" << endl;
+		cout << "You must have 11 arguments in the following format" << endl;
+		cout << "program_name input_image.raw logo_image.raw output_image.raw [BytesPerPixel = 1] [Width = 256] [Height = 256] [BytesPerPixel_Logo = 1] [Width_Logo = 256] [Height_Logo = 256] [background = 1]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[4]);
+	  Width = atoi(argv[5]);
+	  Height = atoi(argv[6]);
+	  BytesPerPixel_logo = atoi(argv[7]);
+	  Width_logo = atoi(argv[8]);
+	  Height_logo = atoi(argv[9]);
+	  background = atoi(argv[10]);
+	}
+		
+	// Allocate image data array
+	unsigned char Imagedata[Height][Width][BytesPerPixel];
+	unsigned char logoImage[Height_logo][Width_logo][BytesPerPixel_logo];
+
+	// Read Image into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(Imagedata, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	// Read logo image into image data matrix
+	if (!(file=fopen(argv[2],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(logoImage, sizeof(unsigned char), Height_logo*Width_logo*BytesPerPixel_logo, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+	
+	//create blank new image arrays
+	unsigned char newImage[Height][Width][BytesPerPixel];
+
+	//replicate the target image with the field image
+	for (int channel=0; channel<3; channel++){
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      newImage[row][col][channel] = Imagedata[row][col][channel];
+	    }
+	  }
+	}
+
+	// inverse H matrix values - uncomment the appropriate one
+	// for tartans
+	//double Hinv[9] = {0.73722705, 0.56458960, -614.335849959, -1.0653810, 0.06689382, 602.3186942, 0.00231822, -0.00050574472, -0.1944968594};
+	// for trojans
+	double Hinv[9] = {0.9351, 0.7405, -797.7674, -1.4171, 0.0996, 768.1136, 0.0025, -0.0005, -0.2072};
+
+	//loop over a large area and replace the target pixels with logo pixels
+	for (int row=440; row<=570; row++){
+	  for (int col=400; col<=620; col++){
+	    
+	    double w2 = 1/(Hinv[6]*row + Hinv[7]*col + Hinv[8]);
+	    double x1 = row*w2*Hinv[0] + col*w2*Hinv[1] + w2*Hinv[2];
+	    double y1 = row*w2*Hinv[3] + col*w2*Hinv[4] + w2*Hinv[5];
+
+	    //change values only if mapping is in valid range - uncomment for appropriate one
+	    // for tartans
+	    //if (x1>=27 && x1<=126 && y1<=307 && y1>=36){
+	    // for trojans
+	    if (x1>=23 && x1<=144 && y1<=337 && y1>=15){
+	    
+	      //coordinates of surrounding pixels
+	      int row1 = int(floor(x1));
+	      int row2 = int(ceil(x1));
+	      int col1 = int(floor(y1));
+	      int col2 = int(ceil(y1));
+	    
+	      double a = x1 - row1;
+	      double b = y1 - col1; 
+	      
+	      //corresponding pixel values from the logo image
+	      int red = (int)((1-b)*((1-a)*logoImage[row1][col1][0] + a*logoImage[row2][col1][0]) + (b)*((1-a)*logoImage[row1][col2][0] + a*logoImage[row2][col2][0]));
+	      int green = (int)((1-b)*((1-a)*logoImage[row1][col1][1] + a*logoImage[row2][col1][1]) + (b)*((1-a)*logoImage[row1][col2][1] + a*logoImage[row2][col2][1]));
+	      int blue = (int)((1-b)*((1-a)*logoImage[row1][col1][2] + a*logoImage[row2][col1][2]) + (b)*((1-a)*logoImage[row1][col2][2] + a*logoImage[row2][col2][2]));
+	      
+	      //replace target image values with logo pixels if they are not black
+	      if (red>=5 && green>=5 && blue>=5 && background==0){
+		newImage[row][col][0] = (unsigned char)red;
+		newImage[row][col][1] = (unsigned char)green;
+		newImage[row][col][2] = (unsigned char)blue;
+	      }
+	      else if (red!=255 && green!=255 && blue!=255 && background==1){
+		newImage[row][col][0] = (unsigned char)red;
+		newImage[row][col][1] = (unsigned char)green;
+		newImage[row][col][2] = (unsigned char)blue;
+	      }
+	    }
+
+	  }
+	}
+	
+	// Write image data from image data matrix
+
+	if (!(file=fopen(argv[3],"wb"))) {
+		cout << "Cannot open file: " << argv[2] << endl;
+		exit(1);
+	}
+	fwrite(newImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	return 0;
+}
+
+
+// Homework 2
+// This code implements dithering
+// Question 2.a
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [Width = 256] [Height = 256] [option = I2/I4/I8/A4/GL4]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <time.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <string>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{ 
+	// Define file pointer and variables
+	FILE *file;
+	int Height = 256;
+	int Width = 256;
+	string option = "";
+	
+	// Check for proper syntax
+	if (argc < 6){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs dithering" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [Width = 256] [Height = 256] [option = I2/I4/I8/A4/GL4]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  Width = atoi(argv[3]);
+	  Height = atoi(argv[4]);
+	  option = argv[5];
+	}
+	
+	// Allocate image data array
+	unsigned char inputImage[Height][Width];
+
+	// Read Image into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(inputImage, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+
+	//create blank new image arrays
+	unsigned char outputImage[Height][Width];
+	
+	// the bayer matrix values and the A4 matrix provided in question
+	int I2[2][2] = { {0, 2}, {3, 1} };
+	int I4[4][4] = { {0, 8, 2, 10}, {12, 4, 14, 6}, {3, 11, 1, 9}, {15, 7, 13, 5} };
+	int I8[8][8] = { {0, 32, 8, 40, 2, 34, 10, 42}, {48, 16, 56, 24, 50, 18, 58, 26}, {12, 44, 4, 36, 14, 46, 6, 38}, {60, 28, 52, 20, 62, 30, 54, 22}, {3, 35, 11, 43, 1, 33, 9, 41}, {51, 19, 59, 27, 49, 17, 57, 25}, {15, 47, 7, 39, 13, 45, 5, 37}, {63, 31, 55, 23, 61, 29, 53, 21} };
+	int A4[4][4] = { {14, 10, 11, 15}, {9, 3, 0, 4}, {8, 2, 1, 5}, {13, 7, 6, 12} };
+	
+	// if the chose option is for I2 matrix
+	if (option.compare("I2") == 0){
+
+	  //create the threshold matrix
+	  double thresh2[2][2] = {};
+	  for (int i=0; i<2; i++){
+	    for (int j=0; j<2; j++){
+	      thresh2[i][j] = ((I2[i][j]+0.5)*255)/4;
+	    }
+	  }
+
+	  // binarize the matrix
+	  for (int row=0; row<Height; row+=2){
+	    for (int col=0; col<Width; col+=2){
+	      
+	      for (int i=0; i<2; i++){
+		for (int j=0; j<2; j++){
+		  
+		  if (inputImage[row+i][col+j]>thresh2[i][j])
+		    outputImage[row+i][col+j] = 255;
+		  else
+		    outputImage[row+i][col+j] = 0;
+
+		}
+	      }
+
+	    }
+	  }
+	}
+	  
+	// if the chose option is for I4 matrix
+	else if (option.compare("I4") == 0){
+	  
+	  //create the threshold matrix
+	  double thresh4[4][4] = {};
+	  for (int i=0; i<4; i++){
+	    for (int j=0; j<4; j++){
+	      thresh4[i][j] = ((I4[i][j]+0.5)*255)/16;
+	    }
+	  }
+	  
+	  // binarize the matrix
+	  for (int row=0; row<Height; row+=4){
+	    for (int col=0; col<Width; col+=4){
+	      
+	      for (int i=0; i<4; i++){
+		for (int j=0; j<4; j++){
+		  
+		  if (inputImage[row+i][col+j]>thresh4[i][j])
+		    outputImage[row+i][col+j] = 255;
+		  else
+		    outputImage[row+i][col+j] = 0;
+		  
+		}
+	      }
+	      
+	    }
+	  }
+	  
+	}
+
+	// if the chose option is for I8 matrix
+	else if (option.compare("I8") == 0){
+	  
+	  //create the threshold matrix
+	  double thresh8[8][8] = {};
+	  for (int i=0; i<8; i++){
+	    for (int j=0; j<8; j++){
+	      thresh8[i][j] = ((I8[i][j]+0.5)*255)/64;
+	    }
+	  }
+	  
+	  // binarize the matrix
+	  for (int row=0; row<Height; row+=8){
+	    for (int col=0; col<Width; col+=8){
+	      
+	      for (int i=0; i<8; i++){
+		for (int j=0; j<8; j++){
+		  
+		  if (inputImage[row+i][col+j]>thresh8[i][j])
+		    outputImage[row+i][col+j] = 255;
+		  else
+		    outputImage[row+i][col+j] = 0;
+		  
+		}
+	      }
+	      
+	    }
+	  }
+	  
+	}
+
+	// if the chose option is for A4 matrix
+	else if (option.compare("A4") == 0){
+	  
+	  //create the threshold matrix
+	  double thresh4[4][4] = {};
+	  for (int i=0; i<4; i++){
+	    for (int j=0; j<4; j++){
+	      thresh4[i][j] = ((A4[i][j]+0.5)*255)/16;
+	    }
+	  }
+	  
+	  // binarize the matrix
+	  for (int row=0; row<Height; row+=4){
+	    for (int col=0; col<Width; col+=4){
+	      
+	      for (int i=0; i<4; i++){
+		for (int j=0; j<4; j++){
+		  
+		  if (inputImage[row+i][col+j]>thresh4[i][j])
+		    outputImage[row+i][col+j] = 255;
+		  else
+		    outputImage[row+i][col+j] = 0;
+		  
+		}
+	      }
+	      
+	    }
+	  }
+	  
+	}
+
+	// if the chose option is for 4 intensity level grayscale
+	else if (option.compare("GL4") == 0){
+
+	  // uncomment for baseline threshold
+	  // straighforward quantization into 4 levels
+	  // for the range 0-65, 65-130, 130-195, 195-255
+
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+
+	      if (inputImage[row][col]<65)
+		outputImage[row][col] = 0;
+	      else if (inputImage[row][col]<130)
+		outputImage[row][col] = 85;
+	      else if (inputImage[row][col]<195)
+		outputImage[row][col] = 170;
+	      else
+		outputImage[row][col] = 255;
+
+	    }
+	  }
+		
+	}
+	
+	else{
+	  cout << "Invalid matrix chosen. Last parameter should be I2 or I4 or I8 or A4" << endl;
+	}
+ 
+	// Write image data from image data matrix
+	
+	if (!(file=fopen(argv[2],"wb"))) {
+	  cout << "Cannot open file: " << argv[2] << endl;
+	  exit(1);
+	}
+	fwrite(outputImage, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+       	
+	return 0;
+}
+
+
+// Homework 2
+// This code implements error diffusion
+// Question 2.b
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [Width = 256] [Height = 256] [option = FS/JJN/ST]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <time.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <string>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{ 
+	// Define file pointer and variables
+	FILE *file;
+	int Height = 256;
+	int Width = 256;
+	string option = "";
+	
+	// Check for proper syntax
+	if (argc < 6){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs error diffusion" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [Width = 256] [Height = 256] [option = FS/JJN/ST]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  Width = atoi(argv[3]);
+	  Height = atoi(argv[4]);
+	  option = argv[5];
+	}
+	
+	// Allocate image data array
+	unsigned char inputImage[Height][Width];
+
+	// Read Image into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(inputImage, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+
+	//create blank new image arrays
+	unsigned char outputImage[Height][Width];
+
+	// create a matrix for storing the noise
+	vector<vector<double> > noise;
+	noise.resize(Height+4);
+	for (int row=0; row<Height+4; row++)
+	  noise[row].resize(Width+4);
+
+	// initialize the noise matrix with 0's
+	for (int row=0; row<Height+4; row++){
+	  for (int col=0; col<Width+4; col++){
+	    noise[row][col] = 0;
+	  }
+	}
+		
+	// if the chose option is for Floyd-Steinberg
+	if (option.compare("FS") == 0){
+	  
+	  for (int row=0; row<Height; row++){
+
+	    double error = 0;
+	    // left to right scanning for even rows
+	    if (row%2==0){
+	      for (int col=0; col<Width; col++){
+		
+		if ( ( (inputImage[row][col]/255.0) + noise[row+2][col+2]) > 0.5)
+		  outputImage[row][col] = 255;
+		else
+		  outputImage[row][col] = 0;
+		
+		  error = ((inputImage[row][col]/255.0) + noise[row+2][col+2]) - (outputImage[row][col]/255.0);
+		  noise[row+2][col+3] += (7/16.0)*error;
+		  noise[row+3][col+1] += (3/16.0)*error;
+		  noise[row+3][col+2] += (5/16.0)*error;
+		  noise[row+3][col+3] += (1/16.0)*error;
+
+		}
+	    }
+
+	    // right to left scanning for odd rows
+	    else{
+	      for (int col=Width-1; col>=0; col--){
+
+		if ( ( (inputImage[row][col]/255.0) + noise[row+2][col+2]) > 0.5)
+		  outputImage[row][col] = 255;
+		else
+		  outputImage[row][col] = 0;
+		
+		  error = ((inputImage[row][col]/255.0) + noise[row+2][col+2]) - (outputImage[row][col]/255.0);
+		  noise[row+2][col+1] += (7/16.0)*error;
+		  noise[row+3][col+3] += (3/16.0)*error;
+		  noise[row+3][col+2] += (5/16.0)*error;
+		  noise[row+3][col+1] += (1/16.0)*error;
+		
+	      }
+	    }
+
+	  }
+	}
+	  
+	// if the chose option is for JJN
+	else if (option.compare("JJN") == 0){
+	  
+	  for (int row=0; row<Height; row++){
+
+	    double error = 0;
+	    // left to right scanning for even rows
+	    if (row%2==0){
+	      for (int col=0; col<Width; col++){
+		
+		if ( ( (inputImage[row][col]/255.0) + noise[row+2][col+2]) > 0.5)
+		  outputImage[row][col] = 255;
+		else
+		  outputImage[row][col] = 0;
+		
+		  error = ((inputImage[row][col]/255.0) + noise[row+2][col+2]) - (outputImage[row][col]/255.0);
+		  noise[row+2][col+3] += (7/48.0)*error;
+		  noise[row+2][col+4] += (5/48.0)*error;
+		  noise[row+3][col] += (3/48.0)*error;
+		  noise[row+3][col+1] += (5/48.0)*error;
+		  noise[row+3][col+2] += (7/48.0)*error;
+		  noise[row+3][col+3] += (5/48.0)*error;
+		  noise[row+3][col+4] += (3/48.0)*error;
+		  noise[row+4][col] += (1/48.0)*error;
+		  noise[row+4][col+1] += (3/48.0)*error;
+		  noise[row+4][col+2] += (5/48.0)*error;
+		  noise[row+4][col+3] += (3/48.0)*error;
+		  noise[row+4][col+4] += (1/48.0)*error;
+
+		}
+	    }
+
+	    // right to left scanning for odd rows
+	    else{
+	      for (int col=Width-1; col>=0; col--){
+
+		if ( ( (inputImage[row][col]/255.0) + noise[row+1][col+1]) > 0.5)
+		  outputImage[row][col] = 255;
+		else
+		  outputImage[row][col] = 0;
+		
+		  error = ((inputImage[row][col]/255.0) + noise[row][col]) - (outputImage[row][col]/255.0);
+		  noise[row+2][col] += (5/48.0)*error;
+		  noise[row+2][col+1] += (7/48.0)*error;
+		  noise[row+3][col] += (3/48.0)*error;
+		  noise[row+3][col+1] += (5/48.0)*error;
+		  noise[row+3][col+2] += (7/48.0)*error;
+		  noise[row+3][col+3] += (5/48.0)*error;
+		  noise[row+3][col+4] += (3/48.0)*error;
+		  noise[row+4][col] += (1/48.0)*error;
+		  noise[row+4][col+1] += (3/48.0)*error;
+		  noise[row+4][col+2] += (5/48.0)*error;
+		  noise[row+4][col+3] += (3/48.0)*error;
+		  noise[row+4][col+4] += (1/48.0)*error;
+		
+	      }
+	    }
+
+	  }
+	}
+
+	// if the chose option is for Stucki
+	else if (option.compare("ST") == 0){
+	  
+	  for (int row=0; row<Height; row++){
+
+	    double error = 0;
+	    // left to right scanning for even rows
+	    if (row%2==0){
+	      for (int col=0; col<Width; col++){
+		
+		if ( ( (inputImage[row][col]/255.0) + noise[row+2][col+2]) > 0.5)
+		  outputImage[row][col] = 255;
+		else
+		  outputImage[row][col] = 0;
+		
+		  error = ((inputImage[row][col]/255.0) + noise[row+2][col+2]) - (outputImage[row][col]/255.0);
+		  noise[row+2][col+3] += (8/42.0)*error;
+		  noise[row+2][col+4] += (4/42.0)*error;
+		  noise[row+3][col] += (2/42.0)*error;
+		  noise[row+3][col+1] += (4/42.0)*error;
+		  noise[row+3][col+2] += (8/42.0)*error;
+		  noise[row+3][col+3] += (4/42.0)*error;
+		  noise[row+3][col+4] += (2/42.0)*error;
+		  noise[row+4][col] += (1/42.0)*error;
+		  noise[row+4][col+1] += (2/42.0)*error;
+		  noise[row+4][col+2] += (4/42.0)*error;
+		  noise[row+4][col+3] += (2/42.0)*error;
+		  noise[row+4][col+4] += (1/42.0)*error;
+
+		}
+	    }
+
+	    // right to left scanning for odd rows
+	    else{
+	      for (int col=Width-1; col>=0; col--){
+
+		if ( ( (inputImage[row][col]/255.0) + noise[row+1][col+1]) > 0.5)
+		  outputImage[row][col] = 255;
+		else
+		  outputImage[row][col] = 0;
+		
+		  error = ((inputImage[row][col]/255.0) + noise[row][col]) - (outputImage[row][col]/255.0);
+		  noise[row+2][col] += (4/42.0)*error;
+		  noise[row+2][col+1] += (8/42.0)*error;
+		  noise[row+3][col] += (2/42.0)*error;
+		  noise[row+3][col+1] += (4/42.0)*error;
+		  noise[row+3][col+2] += (8/42.0)*error;
+		  noise[row+3][col+3] += (4/42.0)*error;
+		  noise[row+3][col+4] += (2/42.0)*error;
+		  noise[row+4][col] += (1/42.0)*error;
+		  noise[row+4][col+1] += (2/42.0)*error;
+		  noise[row+4][col+2] += (4/42.0)*error;
+		  noise[row+4][col+3] += (2/42.0)*error;
+		  noise[row+4][col+4] += (1/42.0)*error;
+		
+	      }
+	    }
+
+	  }
+	}
+	
+	else{
+	  cout << "Invalid option chosen. Last parameter should be FS or JJN or ST" << endl;
+	}
+ 
+	// Write image data from image data matrix
+	
+	if (!(file=fopen(argv[2],"wb"))) {
+	  cout << "Cannot open file: " << argv[2] << endl;
+	  exit(1);
+	}
+	fwrite(outputImage, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+       	
+	return 0;
+}
+
+
+// Homework 2
+// This code performs analysis on rice image
+// Question 3.a
+// This code takes 6 arguments in the following format
+// program_name input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <time.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <string>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{ 
+	// Define file pointer and variables
+	FILE *file;
+	int Height = 256;
+	int Width = 256;
+	int BytesPerPixel = 3;
+	string option = "";
+	
+	// Check for proper syntax
+	if (argc < 6){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs analysis on rice image" << endl;
+		cout << "You must have 6 arguments in the following format" << endl;
+		cout << "program_name input_image.raw output_image.raw [BytesPerPixel = 3] [Width = 256] [Height = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  BytesPerPixel = atoi(argv[3]);
+	  Width = atoi(argv[4]);
+	  Height = atoi(argv[5]);
+	}
+	
+	// Allocate image data array
+	unsigned char inputImage[Height][Width][BytesPerPixel];
+
+	// Read Image into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(inputImage, sizeof(unsigned char), Height*Width*BytesPerPixel, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+
+	//create blank new image arrays
+	unsigned char outputImage[Height][Width];
+
+	// convert image to grayscale
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    outputImage[row][col] = (unsigned char)(0.21*inputImage[row][col][0] + 0.72*inputImage[row][col][1] + 0.07*inputImage[row][col][2]);
+	    //outputImage[row][col] = (unsigned char)((inputImage[row][col][0] + inputImage[row][col][1] + inputImage[row][col][2])/3.0);
+	  }
+	}
+
+	// create vector to store frequency of grayscale
+	vector<int> freq;
+	freq.resize(256);
+	for (int i=0; i<256; i++)
+	  freq[i] = 0;
+
+	// binarize the image
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    freq[outputImage[row][col]] += 1;
+	  }
+	}
+
+	// count the bin with max frequency
+	int maxi = -1;
+	int grayVal = 0;
+	for (int i=0; i<256; i++){
+	  if (freq[i]>maxi){
+	    maxi = freq[i];
+	    grayVal = i;
+	  }
+	}
+
+	// binarize the image
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+
+	    if (abs(outputImage[row][col]-grayVal)>11)
+	      outputImage[row][col] = 255;
+	    else
+	      outputImage[row][col] = 0;
+
+	  }
+	}
+
+	// remove isolated single white pixels
+	for (int row=1; row<Height-1; row++){
+	  for (int col=1; col<Width-1; col++){
+	    if (outputImage[row][col]==255 && outputImage[row+1][col]==0 && outputImage[row-1][col]==0 && outputImage[row][col+1]==0 && outputImage[row][col-1]==0)
+	      outputImage[row][col] = 0;
+	  }
+	}
+
+	// remove isolated double white pixels
+	for (int row=1; row<Height-2; row++){
+	  for (int col=1; col<Width-2; col++){
+	    // 2 horizontal pixels
+	    if (outputImage[row][col]==255 && outputImage[row][col+1]==255 && outputImage[row][col-1]==0 && outputImage[row][col+2]==0 && outputImage[row-1][col]==0 && outputImage[row-1][col+1]==0 && outputImage[row+1][col]==0 && outputImage[row+1][col+1]==0){
+	      outputImage[row][col] = 0;
+	      outputImage[row][col+1] = 0;
+	    }
+	    // 2 vertical pixels
+	    if (outputImage[row][col]==255 && outputImage[row+1][col]==255 && outputImage[row-1][col]==0 && outputImage[row+2][col]==0 && outputImage[row][col-1]==0 && outputImage[row][col+1]==0 && outputImage[row+1][col-1]==0 && outputImage[row+1][col+1]==0){
+	      outputImage[row][col] = 0;
+	      outputImage[row+1][col] = 0;
+	    }
+	  }
+	}
+
+	// dilation of dark rice grains in binary image
+	for (int i=0; i<2; i++){
+	  for (int row=392; row<483; row++){
+	    for (int col=162; col<313; col++){
+	      if (outputImage[row][col]==255){
+		/*outputImage[row-1][col-1] = 2;
+		outputImage[row-1][col+1] = 2;
+		outputImage[row+1][col+1] = 2;
+		outputImage[row+1][col-1] = 2;*/
+		outputImage[row-1][col] = 2;
+		outputImage[row][col-1] = 2;
+		outputImage[row+1][col] = 2;
+		outputImage[row][col+1] = 2;
+	      }
+	    }
+	  }
+	
+
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      if (outputImage[row][col]==2)
+		outputImage[row][col]=255;
+	    }
+	  }
+	}
+
+	// create a complement of the image
+	vector<vector <int> > complementImage;
+	complementImage.resize(Height);
+	for (int row=0; row<Height; row++)
+	  complementImage[row].resize(Width);
+
+	// fill the complement image
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    if (outputImage[row][col]==255)
+	      complementImage[row][col] = 1000;
+	    else
+	      complementImage[row][col] = 1;
+	  }
+	}
+
+	// label connected components in connected image
+	int labelCounter = 2;
+	for (int row=1; row<Height-1; row++){
+	  for (int col=1; col<Width-1; col++){
+	    int mini = 0;
+	    if (complementImage[row][col]==1){
+	      
+	      
+	      int m1 = complementImage[row][col-1];
+	      int m2 = complementImage[row-1][col-1];
+	      int m3 = complementImage[row-1][col];
+	      int m4 = complementImage[row-1][col+1];
+	      
+	      mini = min(m4, min(m2, min(m1, m3)));
+
+	      if (mini==1000){
+		complementImage[row][col] = labelCounter;
+		labelCounter++;
+	      }
+	      else{
+		complementImage[row][col] = mini;
+	      }
+	    }
+	  }
+	}
+
+	// remove holes using the connected components in final image
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    if (complementImage[row][col]==1)
+	      outputImage[row][col] = 0;
+	    else
+	      outputImage[row][col] = 255;
+	  }
+	}
+
+	// shrinking
+	vector<vector <int> > shrinkImage;
+	shrinkImage.resize(Height);
+	for (int row=0; row<Height; row++)
+	  shrinkImage[row].resize(Width);
+
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    shrinkImage[row][col] = outputImage[row][col];
+	  }
+	}
+
+	vector<vector <int> > conM;
+	conM.resize(Height);
+	for (int row=0; row<Height; row++)
+	  conM[row].resize(Width);
+	
+	bool change = true;
+	int iter = 0;
+	while (change){
+	  iter++;
+	  
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      conM[row][col] = 0;
+	    }
+	  }
+	  
+	  for (int row=1; row<Height-1; row++){
+	    for (int col=1; col<Width-1; col++){
+	      
+	      if (shrinkImage[row][col]==255){
+		
+		int M1 = shrinkImage[row-1][col-1];
+		int M2 = shrinkImage[row-1][col];
+		int M3 = shrinkImage[row-1][col+1];
+		int M4 = shrinkImage[row][col-1];
+		int M6 = shrinkImage[row][col+1];
+		int M7 = shrinkImage[row+1][col-1];
+		int M8 = shrinkImage[row+1][col];
+		int M9 = shrinkImage[row+1][col+1];
+	      
+		int bond = 0;
+		
+		if (M1==255)
+		  bond += 1;
+		if (M2==255)
+		  bond += 2;
+		if (M3==255)
+		  bond += 1;
+		if (M4==255)
+		  bond += 2;
+		if (M6==255)
+		  bond += 2;
+		if (M7==255)
+		  bond += 1;
+		if (M8==255)
+		  bond += 2;
+		if (M9==255)
+		  bond += 1;
+		
+		if (bond==1 && (M1==255 || M3==255 || M7==255 || M9==255))
+		  conM[row][col] = 1;
+		
+		if (bond==2 && (M2==255 || M4==255 || M6==255 || M8==255))
+		  conM[row][col] = 1;
+		
+		if (bond==3 && ((M1==255 && M2==255) || (M2==255 && M3==255) || (M3==255 && M6==255) || (M6==255 && M9==255) || (M9==255 && M8==255) || (M8==255 && M7==255) || (M7==255 && M4==255) || (M4==255 && M1==255)))
+		  conM[row][col] = 1;
+		
+		if (bond==4 && ((M1==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M9==255) || (M7==255 && M8==255 && M9==255) || (M1==255 && M4==255 && M7==255)))
+		  conM[row][col] = 1;
+		
+		if (bond==5 && ((M1==255 && M2==255 && M6==255) || (M2==255 && M6==255 && M9==255) || (M4==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M8==255) || (M2==255 && M3==255 && M6==255) || (M1==255 && M2==255 && M4==255) || (M4==255 && M7==255 && M8==255) || (M6==255 && M8==255 && M9==255)))
+		  conM[row][col] = 1;
+		
+		if (bond==6 && ((M1==255 && M2==255 && M6==255 && M9==255) || (M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M2==255 && M3==255 && M6==255) || (M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255) || (M1==255 && M2==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255) || (M4==255 && M7==255 && M8==255 && M9==255) || (M6==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M8==255 && M9==255)))
+		  conM[row][col] = 1;
+		
+		if (bond==7 && ((M1==255 && M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M7==255 && M8==255 && M9==255)))
+		  conM[row][col] = 1;
+		
+		if (bond==8 && ((M1==0 && M4==0 && M7==0) || (M1==0 && M2==0 && M3==0) || (M3==0 && M6==0 && M9==0) || (M7==0 && M8==0 && M9==0)))
+		  conM[row][col] = 1;
+		
+		if (bond==9 && ((M1==0 && M2==0) || (M2==0 && M3==0) || (M3==0 && M6==0) || (M6==0 && M9==0) || (M9==0 && M8==0) || (M8==0 && M7==0) || (M7==0 && M4==0) || (M4==0 && M1==0)))
+		  conM[row][col] = 1;
+		
+		if (bond==10 && (M2==0 || M4==0 || M6==0 || M8==0))
+		  conM[row][col] = 1;
+		
+	      }
+	    }
+	  }
+	  
+	  change = false;
+	  // unconditional mark pattern application - stage 2
+	  for (int row=1; row<Height-1; row++){
+	    for (int col=1; col<Width-1; col++){
+	      
+	      int M1 = conM[row-1][col-1];
+	      int M2 = conM[row-1][col];
+	      int M3 = conM[row-1][col+1];
+	      int M4 = conM[row][col-1];
+	      int M5 = conM[row][col];
+	      int M6 = conM[row][col+1];
+	      int M7 = conM[row+1][col-1];
+	      int M8 = conM[row+1][col];
+	      int M9 = conM[row+1][col+1];
+	      
+	      if (M5==1){
+		if ( (M1==1 && M2+M3+M4+M6+M7+M8+M9==0) || (M3==1 && M1+M2+M4+M6+M7+M8+M9==0))
+		  shrinkImage[row][col] = 255;
+		else if ( (M8==1 && M1+M2+M3+M4+M6+M7+M9==0) || (M6==1 && M1+M2+M3+M4+M7+M8+M9==0))
+		  shrinkImage[row][col] = 255;
+		else if ((M2+M3+M4==3 && M1+M6+M7+M8+M9==0) || (M1+M2+M6==3 && M3+M4+M7+M8+M9==0) || (M2+M6+M9==3 && M1+M3+M4+M7+M8==0) || (M3+M6+M8==3 && M1+M2+M4+M7+M9==0) || (M4+M7+M9==3 && M1+M2+M3+M6+M8==0))
+		  shrinkImage[row][col] = 255;
+		else if ((M3+M7==2 && M2+M6>=1 && M1+M4+M8+M9==0) || (M1+M9==2 && M2+M4>=1 && M3+M6+M7+M8==0) || (M3+M7==2 && M4+M8>=1 && M1+M2+M6+M9==0) || (M1+M9==2 && M6+M8>=1 && M2+M3+M4+M7==0))
+		  shrinkImage[row][col] = 255;
+		else if (M1+M2+M4==3)
+		  shrinkImage[row][col] = 255;
+		else if ((M2+M4+M6==3 && M3+M8+M9==0) || (M2+M4+M6==3 && M1+M7+M8==0) || (M8+M4+M6==3 && M1+M2+M7==0) || (M8+M4+M6==3 && M2+M3+M9==0) || (M2+M4+M8==3 && M6+M7+M9==0) || (M2+M4+M8==3 && M1+M3+M6==0) || (M2+M6+M8==3 && M1+M3+M4==0) || (M2+M6+M8==3 && M4+M7+M9==0))
+		  shrinkImage[row][col] = 255;
+		else if ( (M1+M3==2 && M7+M8+M9>=1) || (M1+M7==2 && M3+M6+M9>=1) || (M7+M9==2 && M1+M2+M3>=1) || (M3+M9==2 && M1+M4+M7>=1) )
+		  shrinkImage[row][col] = 255;
+		else if ( (M2+M6+M7==3 && M3+M4+M8==0) || (M2+M4+M9==3 && M1+M6+M8==0) || (M3+M4+M8==3 && M2+M6+M7==0) || (M1+M6+M8==3 && M2+M4+M9==0))
+		  shrinkImage[row][col] = 255;
+		else{
+		  shrinkImage[row][col] = 0;
+		  change = true;
+		}
+	      }
+	      
+	    }
+	  }
+	}
+
+	int riceCount = 0;
+
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    if (shrinkImage[row][col]==255)
+	      riceCount++;
+	  }
+	}
+
+	cout << "The rice count from the image is " << riceCount << endl;
+
+	// thinning operation
+
+	vector<vector <int> > thinImage;
+	thinImage.resize(Height);
+	for (int row=0; row<Height; row++)
+	  thinImage[row].resize(Width);
+
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    thinImage[row][col] = outputImage[row][col];
+	  }
+	}
+
+	change = true;
+	while (change){
+	  
+	  for (int row=0; row<Height; row++){
+	    for (int col=0; col<Width; col++){
+	      conM[row][col]=0;
+	    }
+	  }
+
+	  for (int row=1; row<Height-1; row++){
+	    for (int col=1; col<Width-1; col++){
+	      
+	      if (thinImage[row][col]==255){
+		
+		int M1 = thinImage[row-1][col-1];
+		int M2 = thinImage[row-1][col];
+		int M3 = thinImage[row-1][col+1];
+		int M4 = thinImage[row][col-1];
+		int M6 = thinImage[row][col+1];
+		int M7 = thinImage[row+1][col-1];
+		int M8 = thinImage[row+1][col];
+		int M9 = thinImage[row+1][col+1];
+	      
+		int bond = 0;
+		
+		if (M1==255)
+		  bond += 1;
+		if (M2==255)
+		  bond += 2;
+		if (M3==255)
+		  bond += 1;
+		if (M4==255)
+		  bond += 2;
+		if (M6==255)
+		  bond += 2;
+		if (M7==255)
+		  bond += 1;
+		if (M8==255)
+		  bond += 2;
+		if (M9==255)
+		  bond += 1;
+
+		if (bond==4 && ((M1==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M9==255) || (M7==255 && M8==255 && M9==255) || (M1==255 && M4==255 && M7==255) || (M2+M6==255*2) || (M6+M8==255*2) || (M8+M4==255*2) || (M4+M2==255*2)))
+		  conM[row][col] = 1;
+		
+		if (bond==5 && ((M1==255 && M2==255 && M6==255) || (M2==255 && M6==255 && M9==255) || (M4==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M8==255) || (M2==255 && M3==255 && M6==255) || (M1==255 && M2==255 && M4==255) || (M4==255 && M7==255 && M8==255) || (M6==255 && M8==255 && M9==255)))
+		  conM[row][col] = 1;
+		
+		if (bond==6 && ((M1==255 && M2==255 && M6==255 && M9==255) || (M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M2==255 && M3==255 && M6==255) || (M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255) || (M1==255 && M2==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255) || (M4==255 && M7==255 && M8==255 && M9==255) || (M6==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M8==255 && M9==255)))
+		  conM[row][col] = 1;
+		
+		if (bond==7 && ((M1==255 && M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M7==255 && M8==255 && M9==255)))
+		  conM[row][col] = 1;
+		
+		if (bond==8 && ((M1==0 && M4==0 && M7==0) || (M1==0 && M2==0 && M3==0) || (M3==0 && M6==0 && M9==0) || (M7==0 && M8==0 && M9==0)))
+		  conM[row][col] = 1;
+		
+		if (bond==9 && ((M1==0 && M2==0) || (M2==0 && M3==0) || (M3==0 && M6==0) || (M6==0 && M9==0) || (M9==0 && M8==0) || (M8==0 && M7==0) || (M7==0 && M4==0) || (M4==0 && M1==0)))
+		  conM[row][col] = 1;
+		
+		if (bond==10 && (M2==0 || M4==0 || M6==0 || M8==0))
+		  conM[row][col] = 1;
+
+	      }
+	    }
+	  }
+
+	  change = false;
+	  // unconditional mark pattern application - stage 2
+	  for (int row=1; row<Height-1; row++){
+	    for (int col=1; col<Width-1; col++){
+	      
+	      int M1 = conM[row-1][col-1];
+	      int M2 = conM[row-1][col];
+	      int M3 = conM[row-1][col+1];
+	      int M4 = conM[row][col-1];
+	      int M5 = conM[row][col];
+	      int M6 = conM[row][col+1];
+	      int M7 = conM[row+1][col-1];
+	      int M8 = conM[row+1][col];
+	      int M9 = conM[row+1][col+1];
+	      
+	      if (M5==1){
+		if ( (M1==1 && M2+M3+M4+M6+M7+M8+M9==0) || (M3==1 && M1+M2+M4+M6+M7+M8+M9==0))
+		  thinImage[row][col] = 255;
+		else if ( (M8==1 && M1+M2+M3+M4+M6+M7+M9==0) || (M6==1 && M1+M2+M3+M4+M7+M8+M9==0))
+		  thinImage[row][col] = 255;
+		else if ((M1+M2==2 && M3+M4+M6+M7+M8+M9==0) || (M2+M3==2 && M1+M4+M6+M7+M8+M9==0) || (M3+M6==2 && M1+M2+M4+M7+M8+M9==0) || (M6+M9==2 && M1+M2+M3+M4+M7+M8==0) || (M9+M8==2 && M1+M2+M3+M4+M6+M7==0) || (M8+M7==2 && M1+M2+M3+M4+M6+M9==0) || (M7+M4==2 && M1+M2+M3+M6+M8+M9==0) || (M4+M1==2 && M2+M3+M6+M7+M8+M9==0))
+		  thinImage[row][col] = 255;
+		else if ((M2+M3+M4==3 && M1+M6+M7+M8+M9==0) || (M1+M2+M6==3 && M3+M4+M7+M8+M9==0) || (M2+M6+M9==3 && M1+M3+M4+M7+M8==0) || (M3+M6+M8==3 && M1+M2+M4+M7+M9==0)) //|| (M4+M7+M9==3 && M1+M2+M3+M6+M8==0))
+		  thinImage[row][col] = 255;
+		else if ((M3+M7==2 && M2+M6>=1 && M1+M4+M8+M9==0) || (M1+M9==2 && M2+M4>=1 && M3+M6+M7+M8==0) || (M3+M7==2 && M4+M8>=1 && M1+M2+M6+M9==0) || (M1+M9==2 && M6+M8>=1 && M2+M3+M4+M7==0))
+		  thinImage[row][col] = 255;
+		else if (M1+M2+M4==3)
+		  thinImage[row][col] = 255;
+		else if ((M2+M4+M6==3 && M3+M8+M9==0) || (M2+M4+M6==3 && M1+M7+M8==0) || (M8+M4+M6==3 && M1+M2+M7==0) || (M8+M4+M6==3 && M2+M3+M9==0) || (M2+M4+M8==3 && M6+M7+M9==0) || (M2+M4+M8==3 && M1+M3+M6==0) || (M2+M6+M8==3 && M1+M3+M4==0) || (M2+M6+M8==3 && M4+M7+M9==0))
+		  thinImage[row][col] = 255;
+		else if ( (M1+M3==2 && M7+M8+M9>=1) || (M1+M7==2 && M3+M6+M9>=1) || (M7+M9==2 && M1+M2+M3>=1) || (M3+M9==2 && M1+M4+M7>=1) )
+		  thinImage[row][col] = 255;
+		else if ( (M2+M6+M7==3 && M3+M4+M8==0) || (M2+M4+M9==3 && M1+M6+M8==0) || (M3+M4+M8==3 && M2+M6+M7==0) || (M1+M6+M8==3 && M2+M4+M9==0))
+		  thinImage[row][col] = 255;
+		else{
+		  thinImage[row][col] = 0;
+		  change = true;
+		}
+	      }
+	      
+	    }
+	  }
+	} 
+
+	//uncomment to show shrinking or thinning images
+	/*
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    outputImage[row][col] = shrinkImage[row][col];
+	  }
+	}*/
+	
+
+	// get connected components on original binarized rice image for area and length
+	// length
+	vector<vector <int> > areaImage;
+	areaImage.resize(Height);
+	for (int row=0; row<Height; row++)
+	  areaImage[row].resize(Width);
+
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    areaImage[row][col] = outputImage[row][col];
+	  }
+	}
+
+	// length
+	vector<vector <int> > lengthImage;
+	lengthImage.resize(Height);
+	for (int row=0; row<Height; row++)
+	  lengthImage[row].resize(Width);
+
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    lengthImage[row][col] = thinImage[row][col];
+	  }
+	}
+
+	vector<vector <int> > labelList;
+	labelList.resize(riceCount);
+	for (int i=0; i<riceCount; i++)
+	  labelList[i].resize(5);
+	    
+	for (int i=0; i<riceCount; i++){
+	  for (int j=0; j<5; j++){
+	    labelList[i][j] = 0;
+	  }
+	}
+
+	int label = 2;
+	for (int row=0; row<Height; row++){
+	  for (int col=0; col<Width; col++){
+	    if (shrinkImage[row][col]==255 && thinImage[row][col]==255){
+	      areaImage[row][col] = label;
+	      lengthImage[row][col] = label;
+	      labelList[label-2][0] = row;
+	      labelList[label-2][1] = col;
+	      label++;
+	    }
+	    else if (shrinkImage[row][col]==255){
+	      areaImage[row-1][col] = label;
+	      lengthImage[row-1][col] = label;
+	      labelList[label-2][0] = row-1;
+	      labelList[label-2][1] = col;
+	      label++;
+	    }
+	  }
+	}
+
+	change = true;
+	while (change){
+
+	  change = false;
+
+	  for (int row=1; row<Height-1; row++){
+	    for (int col=1; col<Width-1; col++){
+	      
+	      // area
+	      if (areaImage[row][col]!=0 && areaImage[row][col]!=255){
+		int pixelVal = areaImage[row][col];
+
+		if (areaImage[row-1][col]==255){
+		  areaImage[row-1][col]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][3] += 1;
+		  change = true;
+		}
+
+		if (areaImage[row][col+1]==255){
+		  areaImage[row][col+1]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][3] += 1;
+		  change = true;
+		}
+
+		if (areaImage[row+1][col]==255){
+		  areaImage[row+1][col]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][3] += 1;
+		  change = true;
+		}
+
+		if (areaImage[row][col-1]==255){
+		  areaImage[row][col-1]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][3] += 1;
+		  change = true;
+		}
+	      }
+
+	      // length
+	      if (lengthImage[row][col]!=0 && lengthImage[row][col]!=255){
+		int pixelVal = lengthImage[row][col];
+
+		if (lengthImage[row-1][col]==255){
+		  lengthImage[row-1][col]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][4] += 1;
+		  change = true;
+		}
+
+		if (lengthImage[row][col+1]==255){
+		  lengthImage[row][col+1]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][4] += 1;
+		  change = true;
+		}
+
+		if (lengthImage[row+1][col]==255){
+		  lengthImage[row+1][col]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][4] += 1;
+		  change = true;
+		}
+
+		if (lengthImage[row][col-1]==255){
+		  lengthImage[row][col-1]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][4] += 1;
+		  change = true;
+		}
+
+		if (lengthImage[row-1][col-1]==255){
+		  lengthImage[row-1][col-1]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][4] += 1;
+		  change = true;
+		}
+
+		if (lengthImage[row-1][col+1]==255){
+		  lengthImage[row-1][col+1]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][4] += 1;
+		  change = true;
+		}
+
+		if (lengthImage[row+1][col+1]==255){
+		  lengthImage[row+1][col]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][4] += 1;
+		  change = true;
+		}
+
+		if (lengthImage[row+1][col-1]==255){
+		  lengthImage[row][col-1]=pixelVal;
+		  labelList[pixelVal-2][2] = pixelVal;
+		  labelList[pixelVal-2][4] += 1;
+		  change = true;
+		}
+	      }
+	   
+	    }
+	  }
+
+	}
+
+	for (int i=0; i<riceCount; i++)
+	  cout << "Rice at " << labelList[i][0] << "," << labelList[i][1] << " Area: "<< labelList[i][3] << " Length: " << labelList[i][4] << endl;
+
+
+	// Write image data from image data matrix
+	
+	if (!(file=fopen(argv[2],"wb"))) {
+	  cout << "Cannot open file: " << argv[2] << endl;
+	  exit(1);
+	}
+	fwrite(outputImage, sizeof(unsigned char), Height*Width, file);
+	fclose(file);
+       	
+	return 0;
+}
+
+
+// Homework 2
+// This code implents thinning and skeletonizing on the butterfly, fly and probe images
+// Question 3.b
+// This code takes 13 arguments in the following format
+// program_name butterfly_image.raw fly_image.raw probe_image.raw outputButterfly_image.raw outputFly_image.raw outputProbe_image.raw [Width_butterfly = 256] [Height_butterfly = 256] [Width_fly = 256] [Height_fly = 256] [Width_probe = 256] [Height_probe = 256]
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <time.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <string>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+
+{ 
+	// Define file pointer and variables
+	FILE *file;
+	int Height_butterfly = 256;
+	int Width_butterfly = 256;
+	int Height_fly = 256;
+	int Width_fly = 256;
+	int Height_probe = 256;
+	int Width_probe = 256;
+	
+	// Check for proper syntax
+	if (argc < 13){
+		cout << "Syntax Error - Incorrect Parameter Usage:" << endl;
+		cout << "This program performs analysis on rice image" << endl;
+		cout << "You must have 13 arguments in the following format" << endl;
+		cout << "program_name butterfly_image.raw fly_image.raw probe_image.raw outputButterfly_image.raw outputFly_image.raw outputProbe_image.raw [Width_butterfly = 256] [Height_butterfly = 256] [Width_fly = 256] [Height_fly = 256] [Width_probe = 256] [Height_probe = 256]" << endl;
+		return 0;
+	}
+	//Get the command line parameters in the appropriate variables
+	else{
+	  Width_butterfly = atoi(argv[7]);
+	  Height_butterfly = atoi(argv[8]);
+	  Width_fly = atoi(argv[9]);
+	  Height_fly = atoi(argv[10]);
+	  Width_probe = atoi(argv[11]);
+	  Height_probe = atoi(argv[12]);
+	}
+	
+	// Allocate image data array
+	unsigned char butterflyImage[Height_butterfly][Width_butterfly];
+	unsigned char flyImage[Height_fly][Width_fly];
+	unsigned char probeImage[Height_probe][Width_probe];
+
+	// Read Image into image data matrix
+	if (!(file=fopen(argv[1],"rb"))) {
+		cout << "Cannot open file: " << argv[1] <<endl;
+		exit(1);
+	}
+	fread(butterflyImage, sizeof(unsigned char), Height_butterfly*Width_butterfly, file);
+	fclose(file);
+
+	// Read Image into image data matrix
+	if (!(file=fopen(argv[2],"rb"))) {
+		cout << "Cannot open file: " << argv[2] <<endl;
+		exit(1);
+	}
+	fread(flyImage, sizeof(unsigned char), Height_fly*Width_fly, file);
+	fclose(file);
+
+	// Read Image into image data matrix
+	if (!(file=fopen(argv[3],"rb"))) {
+		cout << "Cannot open file: " << argv[3] <<endl;
+		exit(1);
+	}
+	fread(probeImage, sizeof(unsigned char), Height_probe*Width_probe, file);
+	fclose(file);
+
+	///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+
+	//create blank new image arrays
+	unsigned char butterflyOutputImage[Height_butterfly][Width_butterfly];
+	unsigned char flyOutputImage[Height_fly][Width_fly];
+	unsigned char probeOutputImage[Height_probe][Width_probe];
+
+	// make boundary of input image black to avoid object touching the border
+
+	//butterfly
+	for (int row=0; row<Height_butterfly; row+=Height_butterfly-1){
+	  for (int col=0; col<Width_butterfly; col++){
+	    butterflyImage[row][col] = 0;
+	  }
+	}
+
+	for (int row=0; row<Height_butterfly; row++){
+	  for (int col=0; col<Width_butterfly; col+=Width_butterfly-1){
+	    butterflyImage[row][col] = 0;
+	  }
+	}
+
+	//fly
+	for (int row=0; row<Height_fly; row+=Height_fly-1){
+	  for (int col=0; col<Width_fly; col++){
+	    flyImage[row][col] = 0;
+	  }
+	}
+
+	for (int row=0; row<Height_fly; row++){
+	  for (int col=0; col<Width_fly; col+=Width_fly-1){
+	    flyImage[row][col] = 0;
+	  }
+	}
+
+	//probe
+	for (int row=0; row<Height_probe; row+=Height_probe-1){
+	  for (int col=0; col<Width_probe; col++){
+	    probeImage[row][col] = 0;
+	  }
+	}
+
+	for (int row=0; row<Height_probe; row++){
+	  for (int col=0; col<Width_probe; col+=Width_probe-1){
+	    probeImage[row][col] = 0;
+	  }
+	}
+
+	for (int butterfly=0; butterfly<1; butterfly++){
+
+	  // label image to store the connnected components
+	  vector<vector <int> > butterflyLabelImage_topLeft;
+	  butterflyLabelImage_topLeft.resize(Height_butterfly);
+	  for (int row=0; row<Height_butterfly; row++)
+	    butterflyLabelImage_topLeft[row].resize(Width_butterfly);
+	  
+	  vector<vector <int> > butterflyLabelImage_botRight;
+	  butterflyLabelImage_botRight.resize(Height_butterfly);
+	  for (int row=0; row<Height_butterfly; row++)
+	    butterflyLabelImage_botRight[row].resize(Width_butterfly);
+	  
+	  // populate the label image with complement of binary image - removing the holes
+	  
+	  //butterfly
+	  for (int row=0; row<Height_butterfly; row++){
+	    for (int col=0; col<Width_butterfly; col++){
+	      if (butterflyImage[row][col]==0){
+		butterflyLabelImage_topLeft[row][col] = 1;
+		butterflyLabelImage_botRight[row][col] = 1;
+	      }
+	      else{
+		butterflyLabelImage_topLeft[row][col] = 5000; // high label to white - least preferable label in later code when choosing min label
+		butterflyLabelImage_botRight[row][col] = 5000;
+	      }
+	    }
+	  }
+
+	  int labelCounter = 2;
+	  for (int row=1; row<Height_butterfly-1; row++){
+	    for (int col=1; col<Width_butterfly-1; col++){
+	      
+	      int mini = 0;
+	      
+	      if (butterflyLabelImage_topLeft[row][col]==1){
+		
+		int n1 = butterflyLabelImage_topLeft[row-1][col-1];
+		int n2 = butterflyLabelImage_topLeft[row-1][col];
+		int n3 = butterflyLabelImage_topLeft[row-1][col+1];
+		int n4 = butterflyLabelImage_topLeft[row][col-1];
+		
+		mini = min(n4, min(n2, min(n1, n3)));
+		
+		if (mini==5000){
+		  butterflyLabelImage_topLeft[row][col] = labelCounter;
+		  labelCounter++;
+		}
+		else
+		  butterflyLabelImage_topLeft[row][col] = mini;
+	      }
+	      
+	    }
+	  }
+	  
+	  // bottom right
+	  labelCounter = 2;
+	  for (int row=Height_butterfly-2; row>0; row--){
+	    for (int col=Width_butterfly-2; col>0; col--){
+	      
+	      int mini = 0;
+	      
+	      if (butterflyLabelImage_botRight[row][col]==1){
+		
+		int n1 = butterflyLabelImage_botRight[row+1][col-1];
+		int n2 = butterflyLabelImage_botRight[row+1][col];
+		int n3 = butterflyLabelImage_botRight[row+1][col+1];
+		int n4 = butterflyLabelImage_botRight[row][col+1];
+		
+		mini = min(n4, min(n2, min(n1, n3)));
+		
+		if (mini==5000){
+		  butterflyLabelImage_botRight[row][col] = labelCounter;
+		  labelCounter++;
+		}
+		else
+		  butterflyLabelImage_botRight[row][col] = mini;
+	      }
+	      
+	    }
+	  }
+	  
+	  // remove holes using the connected components in final image
+	  for (int row=0; row<Height_butterfly; row++){
+	    for (int col=0; col<Width_butterfly; col++){
+	      if (butterflyLabelImage_topLeft[row][col]==1 || butterflyLabelImage_botRight[row][col]==1)
+		butterflyOutputImage[row][col] = 0;
+	      else
+		butterflyOutputImage[row][col] = 255;
+	    }
+	  }
+	  
+	}
+
+	//fly
+	for (int fly=0; fly<1; fly++){
+	  
+	  vector<vector <int> > flyLabelImage_topLeft;
+	  flyLabelImage_topLeft.resize(Height_fly);
+	  for (int row=0; row<Height_fly; row++)
+	    flyLabelImage_topLeft[row].resize(Width_fly);
+
+	  vector<vector <int> > flyLabelImage_botRight;
+	  flyLabelImage_botRight.resize(Height_fly);
+	  for (int row=0; row<Height_fly; row++)
+	    flyLabelImage_botRight[row].resize(Width_fly);
+
+	  
+	  for (int row=0; row<Height_fly; row++){
+	    for (int col=0; col<Width_fly; col++){
+	      if (flyImage[row][col]==0){
+		flyLabelImage_topLeft[row][col] = 1;
+		flyLabelImage_botRight[row][col] = 1;
+	      }
+	      else{
+		flyLabelImage_topLeft[row][col] = 5000; // high label to white - least preferable label in later code when choosing min label
+		flyLabelImage_botRight[row][col] = 5000;
+	      }
+	    }
+	  }
+	 	  
+	  int labelCounter = 2;
+	  for (int row=1; row<Height_fly-1; row++){
+	    for (int col=1; col<Width_fly-1; col++){
+	      
+	      int mini = 0;
+	      
+	      if (flyLabelImage_topLeft[row][col]==1){
+		
+		int n1 = flyLabelImage_topLeft[row-1][col-1];
+		int n2 = flyLabelImage_topLeft[row-1][col];
+		int n3 = flyLabelImage_topLeft[row-1][col+1];
+		int n4 = flyLabelImage_topLeft[row][col-1];
+		
+		mini = min(n4, min(n2, min(n1, n3)));
+		
+		if (mini==5000){
+		  flyLabelImage_topLeft[row][col] = labelCounter;
+		  labelCounter++;
+		}
+		else
+		  flyLabelImage_topLeft[row][col] = mini;
+	      }
+	    }
+	  }
+
+	  // bot Right
+	  labelCounter = 2;
+	  for (int row=Height_fly-2; row>0; row--){
+	    for (int col=Width_fly-2; col>0; col--){
+	      
+	      int mini = 0;
+	      
+	      if (flyLabelImage_botRight[row][col]==1){
+		
+		int n1 = flyLabelImage_botRight[row+1][col-1];
+		int n2 = flyLabelImage_botRight[row+1][col];
+		int n3 = flyLabelImage_botRight[row+1][col+1];
+		int n4 = flyLabelImage_botRight[row][col+1];
+		
+		mini = min(n4, min(n2, min(n1, n3)));
+		
+		if (mini==5000){
+		  flyLabelImage_botRight[row][col] = labelCounter;
+		  labelCounter++;
+		}
+		else
+		  flyLabelImage_botRight[row][col] = mini;
+	      }
+	    }
+	  }
+	 	  
+	  // remove holes using the connected components in final image
+	  for (int row=0; row<Height_fly; row++){
+	    for (int col=0; col<Width_fly; col++){
+	      if (flyLabelImage_topLeft[row][col]==1 || flyLabelImage_botRight[row][col]==1)
+		flyOutputImage[row][col] = 0;
+	    else
+	      flyOutputImage[row][col] = 255;
+	    }
+	  }
+	}
+
+	//probe
+
+	for (int probe=0; probe<1; probe++){
+	  
+	  vector<vector <int> > probeLabelImage_topLeft;
+	  probeLabelImage_topLeft.resize(Height_probe);
+	  for (int row=0; row<Height_probe; row++)
+	    probeLabelImage_topLeft[row].resize(Width_probe);
+
+	  vector<vector <int> > probeLabelImage_botRight;
+	  probeLabelImage_botRight.resize(Height_probe);
+	  for (int row=0; row<Height_probe; row++)
+	    probeLabelImage_botRight[row].resize(Width_probe);
+	  
+	  for (int row=0; row<Height_probe; row++){
+	    for (int col=0; col<Width_probe; col++){
+	      if (probeImage[row][col]==0){
+		probeLabelImage_topLeft[row][col] = 1;
+		probeLabelImage_botRight[row][col] = 1;
+	      }
+	      else{
+		probeLabelImage_topLeft[row][col] = 5000; // high label to white - least preferable label in later code when choosing min label
+		probeLabelImage_botRight[row][col] = 5000;
+	      }
+	    }
+	  }
+	  
+	  // probeLookup vector
+	 	  
+	  int labelCounter = 2;
+	  for (int row=1; row<Height_probe-1; row++){
+	    for (int col=1; col<Width_probe-1; col++){
+	      
+	      int mini = 0;
+	      
+	      if (probeLabelImage_topLeft[row][col]==1){
+		
+		int n1 = probeLabelImage_topLeft[row-1][col-1];
+		int n2 = probeLabelImage_topLeft[row-1][col];
+		int n3 = probeLabelImage_topLeft[row-1][col+1];
+		int n4 = probeLabelImage_topLeft[row][col-1];
+		
+		mini = min(n4, min(n2, min(n1, n3)));
+		
+		if (mini==5000){
+		  probeLabelImage_topLeft[row][col] = labelCounter;
+		  labelCounter++;
+		}
+		else
+		  probeLabelImage_topLeft[row][col] = mini;
+	      }
+	    }
+	  }
+
+	  labelCounter = 2;
+	  for (int row=Height_probe-2; row>0; row--){
+	    for (int col=Width_probe-2; col>0; col--){
+	      
+	      int mini = 0;
+	      
+	      if (probeLabelImage_botRight[row][col]==1){
+		
+		int n1 = probeLabelImage_botRight[row+1][col-1];
+		int n2 = probeLabelImage_botRight[row+1][col];
+		int n3 = probeLabelImage_botRight[row+1][col+1];
+		int n4 = probeLabelImage_botRight[row][col+1];
+		
+		mini = min(n4, min(n2, min(n1, n3)));
+		
+		if (mini==5000){
+		  probeLabelImage_botRight[row][col] = labelCounter;
+		  labelCounter++;
+		}
+		else
+		  probeLabelImage_botRight[row][col] = mini;
+	      }
+	    }
+	  }
+		  
+	  // remove holes using the connected components in final image
+	  for (int row=0; row<Height_probe; row++){
+	    for (int col=0; col<Width_probe; col++){
+	      if (probeLabelImage_topLeft[row][col]==1 || probeLabelImage_botRight[row][col]==1)
+		probeOutputImage[row][col] = 0;
+	      else
+		probeOutputImage[row][col] = 255;
+	    }
+	  }
+	}
+
+	// boundary smoothing
+
+	do{
+
+	  //initialize arrays
+	  vector<vector <int> > butterflyCopy;
+	  butterflyCopy.resize(Height_butterfly);
+	  for (int row=0; row<Height_butterfly; row++)
+	    butterflyCopy[row].resize(Width_butterfly);
+
+	  vector<vector <int> > flyCopy;
+	  flyCopy.resize(Height_fly);
+	  for (int row=0; row<Height_fly; row++)
+	    flyCopy[row].resize(Width_fly);
+
+	  vector<vector <int> > probeCopy;
+	  probeCopy.resize(Height_probe);
+	  for (int row=0; row<Height_probe; row++)
+	    probeCopy[row].resize(Width_probe);
+
+	  // populate them
+	  for (int row=0; row<Height_butterfly; row++){
+	    for (int col=0; col<Width_butterfly; col++){
+	      butterflyCopy[row][col] = butterflyOutputImage[row][col];
+	    }
+	  }
+	  
+	  for (int row=0; row<Height_fly; row++){
+	    for (int col=0; col<Width_fly; col++){
+	      flyCopy[row][col] = flyOutputImage[row][col];
+	    }
+	  }
+
+	  for (int row=0; row<Height_probe; row++){
+	    for (int col=0; col<Width_probe; col++){
+	      probeCopy[row][col] = probeOutputImage[row][col];
+	    }
+	  }
+
+	  // smoothing on all the outputs
+	  
+	  for (int row=1; row<Height_butterfly-1; row++){
+	    for (int col=1; col<Width_butterfly-1; col++){
+	      if (butterflyCopy[row][col]==0){
+		if (butterflyCopy[row-1][col-1]+butterflyCopy[row-1][col]+butterflyCopy[row-1][col+1]+butterflyCopy[row][col-1]+butterflyCopy[row][col+1]+butterflyCopy[row+1][col-1]+butterflyCopy[row+1][col]+butterflyCopy[row+1][col+1]>=1275)
+		  butterflyOutputImage[row][col] = 255;
+	      }
+	    }
+	  }
+
+	  for (int row=1; row<Height_fly-1; row++){
+	    for (int col=1; col<Width_fly-1; col++){
+	      if (flyCopy[row][col]==0){
+		if (flyCopy[row-1][col-1]+flyCopy[row-1][col]+flyCopy[row-1][col+1]+flyCopy[row][col-1]+flyCopy[row][col+1]+flyCopy[row+1][col-1]+flyCopy[row+1][col]+flyCopy[row+1][col+1]>=1275)
+		  flyOutputImage[row][col] = 255;
+	      }
+	    }
+	  }
+
+	  for (int row=1; row<Height_probe-1; row++){
+	    for (int col=1; col<Width_probe-1; col++){
+	      if (probeCopy[row][col]==0){
+		if (probeCopy[row-1][col-1]+probeCopy[row-1][col]+probeCopy[row-1][col+1]+probeCopy[row][col-1]+probeCopy[row][col+1]+probeCopy[row+1][col-1]+probeCopy[row+1][col]+probeCopy[row+1][col+1]>=1275)
+		  probeOutputImage[row][col] = 255;
+	      }
+	    }
+	  }
+
+	}while(false);
+	
+
+	// THINNING
+
+	vector<vector <int> > butterflyThinImage;
+	butterflyThinImage.resize(Height_butterfly);
+	for (int row=0; row<Height_butterfly; row++)
+	  butterflyThinImage[row].resize(Width_butterfly);
+
+	vector<vector <int> > flyThinImage;
+	flyThinImage.resize(Height_fly);
+	for (int row=0; row<Height_fly; row++)
+	  flyThinImage[row].resize(Width_fly);
+
+	vector<vector <int> > probeThinImage;
+	probeThinImage.resize(Height_probe);
+	for (int row=0; row<Height_probe; row++)
+	  probeThinImage[row].resize(Width_probe);
+	
+	do{
+	  
+	  bool change = true;
+	  vector<vector <int> > conM;
+	  conM.resize(Height_butterfly);
+	  for (int row=0; row<Height_butterfly; row++)
+	    conM[row].resize(Width_butterfly);
+	  
+	  for (int row=0; row<Height_butterfly; row++){
+	    for (int col=0; col<Width_butterfly; col++){
+	      butterflyThinImage[row][col] = butterflyOutputImage[row][col];
+	    }
+	  }
+	  
+	  change = true;
+	  while (change){
+	    
+	    for (int row=0; row<Height_butterfly; row++){
+	      for (int col=0; col<Width_butterfly; col++){
+		  conM[row][col]=0;
+	      }
+	    }
+	    
+	    for (int row=1; row<Height_butterfly-1; row++){
+	      for (int col=1; col<Width_butterfly-1; col++){
+		
+		if (butterflyThinImage[row][col]==255){
+		  
+		  int M1 = butterflyThinImage[row-1][col-1];
+		  int M2 = butterflyThinImage[row-1][col];
+		  int M3 = butterflyThinImage[row-1][col+1];
+		  int M4 = butterflyThinImage[row][col-1];
+		  int M6 = butterflyThinImage[row][col+1];
+		  int M7 = butterflyThinImage[row+1][col-1];
+		  int M8 = butterflyThinImage[row+1][col];
+		  int M9 = butterflyThinImage[row+1][col+1];
+		  
+		  int bond = 0;
+		  
+		  if (M1==255)
+		    bond += 1;
+		  if (M2==255)
+		    bond += 2;
+		  if (M3==255)
+		      bond += 1;
+		  if (M4==255)
+		    bond += 2;
+		  if (M6==255)
+		    bond += 2;
+		  if (M7==255)
+		    bond += 1;
+		  if (M8==255)
+		    bond += 2;
+		  if (M9==255)
+		    bond += 1;
+		    
+		  if (bond==4 && ((M1==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M9==255) || (M7==255 && M8==255 && M9==255) || (M1==255 && M4==255 && M7==255) || (M2+M6==255*2) || (M6+M8==255*2) || (M8+M4==255*2) || (M4+M2==255*2)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==5 && ((M1==255 && M2==255 && M6==255) || (M2==255 && M6==255 && M9==255) || (M4==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M8==255) || (M2==255 && M3==255 && M6==255) || (M1==255 && M2==255 && M4==255) || (M4==255 && M7==255 && M8==255) || (M6==255 && M8==255 && M9==255)))
+		      conM[row][col] = 1;
+		  
+		  if (bond==6 && ((M1==255 && M2==255 && M6==255 && M9==255) || (M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M2==255 && M3==255 && M6==255) || (M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255) || (M1==255 && M2==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255) || (M4==255 && M7==255 && M8==255 && M9==255) || (M6==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==7 && ((M1==255 && M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M7==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==8 && ((M1==0 && M4==0 && M7==0) || (M1==0 && M2==0 && M3==0) || (M3==0 && M6==0 && M9==0) || (M7==0 && M8==0 && M9==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==9 && ((M1==0 && M2==0) || (M2==0 && M3==0) || (M3==0 && M6==0) || (M6==0 && M9==0) || (M9==0 && M8==0) || (M8==0 && M7==0) || (M7==0 && M4==0) || (M4==0 && M1==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==10 && (M2==0 || M4==0 || M6==0 || M8==0))
+		    conM[row][col] = 1;
+		  
+		}
+	      }
+	    }
+	    
+	    change = false;
+	    // unconditional mark pattern application - stage 2
+	    for (int row=1; row<Height_butterfly-1; row++){
+	      for (int col=1; col<Width_butterfly-1; col++){
+		
+		int M1 = conM[row-1][col-1];
+		int M2 = conM[row-1][col];
+		int M3 = conM[row-1][col+1];
+		int M4 = conM[row][col-1];
+		int M5 = conM[row][col];
+		int M6 = conM[row][col+1];
+		int M7 = conM[row+1][col-1];
+		int M8 = conM[row+1][col];
+		int M9 = conM[row+1][col+1];
+				
+		if (M5==1){
+		  if ( (M1==1 && M2+M3+M4+M6+M7+M8+M9==0) || (M3==1 && M1+M2+M4+M6+M7+M8+M9==0))
+		    butterflyThinImage[row][col] = 255;
+		  else if ( (M8==1 && M1+M2+M3+M4+M6+M7+M9==0) || (M6==1 && M1+M2+M3+M4+M7+M8+M9==0))
+		    butterflyThinImage[row][col] = 255;
+		  else if ((M1+M2==2 && M3+M4+M6+M7+M8+M9==0) || (M2+M3==2 && M1+M4+M6+M7+M8+M9==0) || (M3+M6==2 && M1+M2+M4+M7+M8+M9==0) || (M6+M9==2 && M1+M2+M3+M4+M7+M8==0) || (M9+M8==2 && M1+M2+M3+M4+M6+M7==0) || (M8+M7==2 && M1+M2+M3+M4+M6+M9==0) || (M7+M4==2 && M1+M2+M3+M6+M8+M9==0) || (M4+M1==2 && M2+M3+M6+M7+M8+M9==0))
+		    butterflyThinImage[row][col] = 255;
+		  else if ((M2+M3+M4==3 && M1+M6+M7+M8+M9==0) || (M1+M2+M6==3 && M3+M4+M7+M8+M9==0) || (M2+M6+M9==3 && M1+M3+M4+M7+M8==0) || (M3+M6+M8==3 && M1+M2+M4+M7+M9==0)) //|| (M4+M7+M9==3 && M1+M2+M3+M6+M8==0))
+		    butterflyThinImage[row][col] = 255;
+		  else if ((M3+M7==2 && M2+M6>=1 && M1+M4+M8+M9==0) || (M1+M9==2 && M2+M4>=1 && M3+M6+M7+M8==0) || (M3+M7==2 && M4+M8>=1 && M1+M2+M6+M9==0) || (M1+M9==2 && M6+M8>=1 && M2+M3+M4+M7==0))
+		    butterflyThinImage[row][col] = 255;
+		  else if (M1+M2+M4==3)
+		    butterflyThinImage[row][col] = 255;
+		  else if ((M2+M4+M6==3 && M3+M8+M9==0) || (M2+M4+M6==3 && M1+M7+M8==0) || (M8+M4+M6==3 && M1+M2+M7==0) || (M8+M4+M6==3 && M2+M3+M9==0) || (M2+M4+M8==3 && M6+M7+M9==0) || (M2+M4+M8==3 && M1+M3+M6==0) || (M2+M6+M8==3 && M1+M3+M4==0) || (M2+M6+M8==3 && M4+M7+M9==0))
+		    butterflyThinImage[row][col] = 255;
+		  else if ( (M1+M3==2 && M7+M8+M9>=1) || (M1+M7==2 && M3+M6+M9>=1) || (M7+M9==2 && M1+M2+M3>=1) || (M3+M9==2 && M1+M4+M7>=1) )
+		      butterflyThinImage[row][col] = 255;
+		  else if ( (M2+M6+M7==3 && M3+M4+M8==0) || (M2+M4+M9==3 && M1+M6+M8==0) || (M3+M4+M8==3 && M2+M6+M7==0) || (M1+M6+M8==3 && M2+M4+M9==0))
+		    butterflyThinImage[row][col] = 255;
+		  else{
+		    butterflyThinImage[row][col] = 0;
+		    change = true;
+		  }
+		}
+		
+	      }
+	    }
+	  }
+	}while(false);
+
+
+	// fly
+	
+	do{
+	  
+	  bool change = true;
+	  vector<vector <int> > conM;
+	  conM.resize(Height_fly);
+	  for (int row=0; row<Height_fly; row++)
+	    conM[row].resize(Width_fly);
+	  
+	  for (int row=0; row<Height_fly; row++){
+	    for (int col=0; col<Width_fly; col++){
+	      flyThinImage[row][col] = flyOutputImage[row][col];
+	    }
+	  }
+	  
+	  change = true;
+	  while (change){
+	    
+	    for (int row=0; row<Height_fly; row++){
+	      for (int col=0; col<Width_fly; col++){
+		  conM[row][col]=0;
+	      }
+	    }
+	    
+	    for (int row=1; row<Height_fly-1; row++){
+	      for (int col=1; col<Width_fly-1; col++){
+		
+		if (flyThinImage[row][col]==255){
+		  
+		  int M1 = flyThinImage[row-1][col-1];
+		  int M2 = flyThinImage[row-1][col];
+		  int M3 = flyThinImage[row-1][col+1];
+		  int M4 = flyThinImage[row][col-1];
+		  int M6 = flyThinImage[row][col+1];
+		  int M7 = flyThinImage[row+1][col-1];
+		  int M8 = flyThinImage[row+1][col];
+		  int M9 = flyThinImage[row+1][col+1];
+		  
+		  int bond = 0;
+		  
+		  if (M1==255)
+		    bond += 1;
+		  if (M2==255)
+		    bond += 2;
+		  if (M3==255)
+		      bond += 1;
+		  if (M4==255)
+		    bond += 2;
+		  if (M6==255)
+		    bond += 2;
+		  if (M7==255)
+		    bond += 1;
+		  if (M8==255)
+		    bond += 2;
+		  if (M9==255)
+		    bond += 1;
+		    
+		  if (bond==4 && ((M1==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M9==255) || (M7==255 && M8==255 && M9==255) || (M1==255 && M4==255 && M7==255) || (M2+M6==255*2) || (M6+M8==255*2) || (M8+M4==255*2) || (M4+M2==255*2)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==5 && ((M1==255 && M2==255 && M6==255) || (M2==255 && M6==255 && M9==255) || (M4==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M8==255) || (M2==255 && M3==255 && M6==255) || (M1==255 && M2==255 && M4==255) || (M4==255 && M7==255 && M8==255) || (M6==255 && M8==255 && M9==255)))
+		      conM[row][col] = 1;
+		  
+		  if (bond==6 && ((M1==255 && M2==255 && M6==255 && M9==255) || (M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M2==255 && M3==255 && M6==255) || (M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255) || (M1==255 && M2==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255) || (M4==255 && M7==255 && M8==255 && M9==255) || (M6==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==7 && ((M1==255 && M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M7==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==8 && ((M1==0 && M4==0 && M7==0) || (M1==0 && M2==0 && M3==0) || (M3==0 && M6==0 && M9==0) || (M7==0 && M8==0 && M9==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==9 && ((M1==0 && M2==0) || (M2==0 && M3==0) || (M3==0 && M6==0) || (M6==0 && M9==0) || (M9==0 && M8==0) || (M8==0 && M7==0) || (M7==0 && M4==0) || (M4==0 && M1==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==10 && (M2==0 || M4==0 || M6==0 || M8==0))
+		    conM[row][col] = 1;
+		  
+		}
+	      }
+	    }
+	    
+	    change = false;
+	    // unconditional mark pattern application - stage 2
+	    for (int row=1; row<Height_fly-1; row++){
+	      for (int col=1; col<Width_fly-1; col++){
+		
+		int M1 = conM[row-1][col-1];
+		int M2 = conM[row-1][col];
+		int M3 = conM[row-1][col+1];
+		int M4 = conM[row][col-1];
+		int M5 = conM[row][col];
+		int M6 = conM[row][col+1];
+		int M7 = conM[row+1][col-1];
+		int M8 = conM[row+1][col];
+		int M9 = conM[row+1][col+1];
+		
+		//if (row==101 && (col==594 || col==595))
+		//cout<< M1 << " " << M2 << " " << M3 << " " << M4 << " " << M5 << " " << M6 << " " << M7 << " " << M8 << " " << M9 << endl;
+		
+		if (M5==1){
+		  if ( (M1==1 && M2+M3+M4+M6+M7+M8+M9==0) || (M3==1 && M1+M2+M4+M6+M7+M8+M9==0))
+		    flyThinImage[row][col] = 255;
+		  else if ( (M8==1 && M1+M2+M3+M4+M6+M7+M9==0) || (M6==1 && M1+M2+M3+M4+M7+M8+M9==0))
+		    flyThinImage[row][col] = 255;
+		  else if ((M1+M2==2 && M3+M4+M6+M7+M8+M9==0) || (M2+M3==2 && M1+M4+M6+M7+M8+M9==0) || (M3+M6==2 && M1+M2+M4+M7+M8+M9==0) || (M6+M9==2 && M1+M2+M3+M4+M7+M8==0) || (M9+M8==2 && M1+M2+M3+M4+M6+M7==0) || (M8+M7==2 && M1+M2+M3+M4+M6+M9==0) || (M7+M4==2 && M1+M2+M3+M6+M8+M9==0) || (M4+M1==2 && M2+M3+M6+M7+M8+M9==0))
+		    flyThinImage[row][col] = 255;
+		  else if ((M2+M3+M4==3 && M1+M6+M7+M8+M9==0) || (M1+M2+M6==3 && M3+M4+M7+M8+M9==0) || (M2+M6+M9==3 && M1+M3+M4+M7+M8==0) || (M3+M6+M8==3 && M1+M2+M4+M7+M9==0)) //|| (M4+M7+M9==3 && M1+M2+M3+M6+M8==0))
+		    flyThinImage[row][col] = 255;
+		  else if ((M3+M7==2 && M2+M6>=1 && M1+M4+M8+M9==0) || (M1+M9==2 && M2+M4>=1 && M3+M6+M7+M8==0) || (M3+M7==2 && M4+M8>=1 && M1+M2+M6+M9==0) || (M1+M9==2 && M6+M8>=1 && M2+M3+M4+M7==0))
+		    flyThinImage[row][col] = 255;
+		  else if (M1+M2+M4==3)
+		    flyThinImage[row][col] = 255;
+		  else if ((M2+M4+M6==3 && M3+M8+M9==0) || (M2+M4+M6==3 && M1+M7+M8==0) || (M8+M4+M6==3 && M1+M2+M7==0) || (M8+M4+M6==3 && M2+M3+M9==0) || (M2+M4+M8==3 && M6+M7+M9==0) || (M2+M4+M8==3 && M1+M3+M6==0) || (M2+M6+M8==3 && M1+M3+M4==0) || (M2+M6+M8==3 && M4+M7+M9==0))
+		    flyThinImage[row][col] = 255;
+		  else if ( (M1+M3==2 && M7+M8+M9>=1) || (M1+M7==2 && M3+M6+M9>=1) || (M7+M9==2 && M1+M2+M3>=1) || (M3+M9==2 && M1+M4+M7>=1) )
+		      flyThinImage[row][col] = 255;
+		  else if ( (M2+M6+M7==3 && M3+M4+M8==0) || (M2+M4+M9==3 && M1+M6+M8==0) || (M3+M4+M8==3 && M2+M6+M7==0) || (M1+M6+M8==3 && M2+M4+M9==0))
+		    flyThinImage[row][col] = 255;
+		  else{
+		    flyThinImage[row][col] = 0;
+		    change = true;
+		  }
+		}
+		
+	      }
+	    }
+	  }
+	}while(false);
+
+	// probe
+
+	do{
+	  
+	  bool change = true;
+	  vector<vector <int> > conM;
+	  conM.resize(Height_probe);
+	  for (int row=0; row<Height_probe; row++)
+	    conM[row].resize(Width_probe);
+	  
+	  for (int row=0; row<Height_probe; row++){
+	    for (int col=0; col<Width_probe; col++){
+	      probeThinImage[row][col] = probeOutputImage[row][col];
+	    }
+	  }
+	  
+	  change = true;
+	  while (change){
+	    
+	    for (int row=0; row<Height_probe; row++){
+	      for (int col=0; col<Width_probe; col++){
+		  conM[row][col]=0;
+	      }
+	    }
+	    
+	    for (int row=1; row<Height_probe-1; row++){
+	      for (int col=1; col<Width_probe-1; col++){
+		
+		if (probeThinImage[row][col]==255){
+		  
+		  int M1 = probeThinImage[row-1][col-1];
+		  int M2 = probeThinImage[row-1][col];
+		  int M3 = probeThinImage[row-1][col+1];
+		  int M4 = probeThinImage[row][col-1];
+		  int M6 = probeThinImage[row][col+1];
+		  int M7 = probeThinImage[row+1][col-1];
+		  int M8 = probeThinImage[row+1][col];
+		  int M9 = probeThinImage[row+1][col+1];
+		  
+		  int bond = 0;
+		  
+		  if (M1==255)
+		    bond += 1;
+		  if (M2==255)
+		    bond += 2;
+		  if (M3==255)
+		      bond += 1;
+		  if (M4==255)
+		    bond += 2;
+		  if (M6==255)
+		    bond += 2;
+		  if (M7==255)
+		    bond += 1;
+		  if (M8==255)
+		    bond += 2;
+		  if (M9==255)
+		    bond += 1;
+		    
+		  if (bond==4 && ((M1==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M9==255) || (M7==255 && M8==255 && M9==255) || (M1==255 && M4==255 && M7==255) || (M2+M6==255*2) || (M6+M8==255*2) || (M8+M4==255*2) || (M4+M2==255*2)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==5 && ((M1==255 && M2==255 && M6==255) || (M2==255 && M6==255 && M9==255) || (M4==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M8==255) || (M2==255 && M3==255 && M6==255) || (M1==255 && M2==255 && M4==255) || (M4==255 && M7==255 && M8==255) || (M6==255 && M8==255 && M9==255)))
+		      conM[row][col] = 1;
+		  
+		  if (bond==6 && ((M1==255 && M2==255 && M6==255 && M9==255) || (M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M2==255 && M3==255 && M6==255) || (M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255) || (M1==255 && M2==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255) || (M4==255 && M7==255 && M8==255 && M9==255) || (M6==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==7 && ((M1==255 && M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M7==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==8 && ((M1==0 && M4==0 && M7==0) || (M1==0 && M2==0 && M3==0) || (M3==0 && M6==0 && M9==0) || (M7==0 && M8==0 && M9==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==9 && ((M1==0 && M2==0) || (M2==0 && M3==0) || (M3==0 && M6==0) || (M6==0 && M9==0) || (M9==0 && M8==0) || (M8==0 && M7==0) || (M7==0 && M4==0) || (M4==0 && M1==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==10 && (M2==0 || M4==0 || M6==0 || M8==0))
+		    conM[row][col] = 1;
+		  
+		}
+	      }
+	    }
+	    
+	    change = false;
+	    // unconditional mark pattern application - stage 2
+	    for (int row=1; row<Height_probe-1; row++){
+	      for (int col=1; col<Width_probe-1; col++){
+		
+		int M1 = conM[row-1][col-1];
+		int M2 = conM[row-1][col];
+		int M3 = conM[row-1][col+1];
+		int M4 = conM[row][col-1];
+		int M5 = conM[row][col];
+		int M6 = conM[row][col+1];
+		int M7 = conM[row+1][col-1];
+		int M8 = conM[row+1][col];
+		int M9 = conM[row+1][col+1];
+				
+		if (M5==1){
+		  if ( (M1==1 && M2+M3+M4+M6+M7+M8+M9==0) || (M3==1 && M1+M2+M4+M6+M7+M8+M9==0))
+		    probeThinImage[row][col] = 255;
+		  else if ( (M8==1 && M1+M2+M3+M4+M6+M7+M9==0) || (M6==1 && M1+M2+M3+M4+M7+M8+M9==0))
+		    probeThinImage[row][col] = 255;
+		  else if ((M1+M2==2 && M3+M4+M6+M7+M8+M9==0) || (M2+M3==2 && M1+M4+M6+M7+M8+M9==0) || (M3+M6==2 && M1+M2+M4+M7+M8+M9==0) || (M6+M9==2 && M1+M2+M3+M4+M7+M8==0) || (M9+M8==2 && M1+M2+M3+M4+M6+M7==0) || (M8+M7==2 && M1+M2+M3+M4+M6+M9==0) || (M7+M4==2 && M1+M2+M3+M6+M8+M9==0) || (M4+M1==2 && M2+M3+M6+M7+M8+M9==0))
+		    probeThinImage[row][col] = 255;
+		  else if ((M2+M3+M4==3 && M1+M6+M7+M8+M9==0) || (M1+M2+M6==3 && M3+M4+M7+M8+M9==0) || (M2+M6+M9==3 && M1+M3+M4+M7+M8==0) || (M3+M6+M8==3 && M1+M2+M4+M7+M9==0)) //|| (M4+M7+M9==3 && M1+M2+M3+M6+M8==0))
+		    probeThinImage[row][col] = 255;
+		  else if ((M3+M7==2 && M2+M6>=1 && M1+M4+M8+M9==0) || (M1+M9==2 && M2+M4>=1 && M3+M6+M7+M8==0) || (M3+M7==2 && M4+M8>=1 && M1+M2+M6+M9==0) || (M1+M9==2 && M6+M8>=1 && M2+M3+M4+M7==0))
+		    probeThinImage[row][col] = 255;
+		  else if (M1+M2+M4==3)
+		    probeThinImage[row][col] = 255;
+		  else if ((M2+M4+M6==3 && M3+M8+M9==0) || (M2+M4+M6==3 && M1+M7+M8==0) || (M8+M4+M6==3 && M1+M2+M7==0) || (M8+M4+M6==3 && M2+M3+M9==0) || (M2+M4+M8==3 && M6+M7+M9==0) || (M2+M4+M8==3 && M1+M3+M6==0) || (M2+M6+M8==3 && M1+M3+M4==0) || (M2+M6+M8==3 && M4+M7+M9==0))
+		    probeThinImage[row][col] = 255;
+		  else if ( (M1+M3==2 && M7+M8+M9>=1) || (M1+M7==2 && M3+M6+M9>=1) || (M7+M9==2 && M1+M2+M3>=1) || (M3+M9==2 && M1+M4+M7>=1) )
+		      probeThinImage[row][col] = 255;
+		  else if ( (M2+M6+M7==3 && M3+M4+M8==0) || (M2+M4+M9==3 && M1+M6+M8==0) || (M3+M4+M8==3 && M2+M6+M7==0) || (M1+M6+M8==3 && M2+M4+M9==0))
+		    probeThinImage[row][col] = 255;
+		  else{
+		    probeThinImage[row][col] = 0;
+		    change = true;
+		  }
+		}
+		
+	      }
+	    }
+	  }
+	}while(false);
+
+	for (int row=0; row<Height_fly; row++){
+	  for (int col=0; col<Width_fly; col++){
+	    flyOutputImage[row][col] = flyThinImage[row][col];
+	  }
+	}
+
+	for (int row=0; row<Height_butterfly; row++){
+	  for (int col=0; col<Width_butterfly; col++){
+	    butterflyOutputImage[row][col] = butterflyThinImage[row][col];
+	  }
+	}
+
+	for (int row=0; row<Height_probe; row++){
+	  for (int col=0; col<Width_probe; col++){
+	    probeOutputImage[row][col] = probeThinImage[row][col];
+	  }
+	}
+
+	// SKELETONIZE
+
+	vector<vector <int> > butterflySkeletImage;
+	butterflySkeletImage.resize(Height_butterfly);
+	for (int row=0; row<Height_butterfly; row++)
+	  butterflySkeletImage[row].resize(Width_butterfly);
+
+	vector<vector <int> > flySkeletImage;
+	flySkeletImage.resize(Height_fly);
+	for (int row=0; row<Height_fly; row++)
+	  flySkeletImage[row].resize(Width_fly);
+
+	vector<vector <int> > probeSkeletImage;
+	probeSkeletImage.resize(Height_probe);
+	for (int row=0; row<Height_probe; row++)
+	  probeSkeletImage[row].resize(Width_probe);
+	
+	do{
+	  
+	  bool change = true;
+	  vector<vector <int> > conM;
+	  conM.resize(Height_butterfly);
+	  for (int row=0; row<Height_butterfly; row++)
+	    conM[row].resize(Width_butterfly);
+	  
+	  for (int row=0; row<Height_butterfly; row++){
+	    for (int col=0; col<Width_butterfly; col++){
+	      butterflySkeletImage[row][col] = butterflyOutputImage[row][col];
+	    }
+	  }
+	  
+	  change = true;
+	  while (change){
+	    
+	    for (int row=0; row<Height_butterfly; row++){
+	      for (int col=0; col<Width_butterfly; col++){
+		  conM[row][col]=0;
+	      }
+	    }
+	    
+	    for (int row=1; row<Height_butterfly-1; row++){
+	      for (int col=1; col<Width_butterfly-1; col++){
+		
+		if (butterflySkeletImage[row][col]==255){
+		  
+		  int M1 = butterflySkeletImage[row-1][col-1];
+		  int M2 = butterflySkeletImage[row-1][col];
+		  int M3 = butterflySkeletImage[row-1][col+1];
+		  int M4 = butterflySkeletImage[row][col-1];
+		  int M6 = butterflySkeletImage[row][col+1];
+		  int M7 = butterflySkeletImage[row+1][col-1];
+		  int M8 = butterflySkeletImage[row+1][col];
+		  int M9 = butterflySkeletImage[row+1][col+1];
+		  
+		  int bond = 0;
+		  
+		  if (M1==255)
+		    bond += 1;
+		  if (M2==255)
+		    bond += 2;
+		  if (M3==255)
+		      bond += 1;
+		  if (M4==255)
+		    bond += 2;
+		  if (M6==255)
+		    bond += 2;
+		  if (M7==255)
+		    bond += 1;
+		  if (M8==255)
+		    bond += 2;
+		  if (M9==255)
+		    bond += 1;
+		    
+		  if (bond==4 && ((M1==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M9==255) || (M7==255 && M8==255 && M9==255) || (M1==255 && M4==255 && M7==255) || (M2+M6==255*2) || (M6+M8==255*2) || (M8+M4==255*2) || (M4+M2==255*2)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==6 && ((M1==255 && M2==255 && M3==255 && M6==255) || (M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255) || (M1==255 && M2==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255) || (M4==255 && M7==255 && M8==255 && M9==255) || (M6==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==7 && ((M1==255 && M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M7==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==8 && ((M1==0 && M4==0 && M7==0) || (M1==0 && M2==0 && M3==0) || (M3==0 && M6==0 && M9==0) || (M7==0 && M8==0 && M9==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==9 && ((M1==0 && M2==0) || (M2==0 && M3==0) || (M3==0 && M6==0) || (M6==0 && M9==0) || (M9==0 && M8==0) || (M8==0 && M7==0) || (M7==0 && M4==0) || (M4==0 && M1==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==10 && (M2==0 || M4==0 || M6==0 || M8==0))
+		    conM[row][col] = 1;
+
+		  if (bond==11 && (M1==0 || M3==0 || M9==0 || M7==0))
+		    conM[row][col] = 1;
+		  
+		}
+	      }
+	    }
+	    
+	    change = false;
+	    // unconditional mark pattern application - stage 2
+	    for (int row=1; row<Height_butterfly-1; row++){
+	      for (int col=1; col<Width_butterfly-1; col++){
+		
+		int M1 = conM[row-1][col-1];
+		int M2 = conM[row-1][col];
+		int M3 = conM[row-1][col+1];
+		int M4 = conM[row][col-1];
+		int M5 = conM[row][col];
+		int M6 = conM[row][col+1];
+		int M7 = conM[row+1][col-1];
+		int M8 = conM[row+1][col];
+		int M9 = conM[row+1][col+1];
+				
+		if (M5==1){
+		  if ( (M1==1 && M2+M3+M4+M6+M7+M8+M9==0) || (M3==1 && M1+M2+M4+M6+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if ( (M8==1 && M1+M2+M3+M4+M6+M7+M9==0) || (M6==1 && M1+M2+M3+M4+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if ((M2+M6==2 && M1+M3+M4+M7+M8+M9==0) || (M8+M6==2 && M1+M2+M3+M4+M7+M9==0) || (M4+M8==2 && M1+M2+M3+M6+M7+M9==0) || (M2+M4==2 && M1+M3+M6+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if (M1+M2+M4==3 || M6+M8+M9==3)
+		    butterflySkeletImage[row][col] = 255;
+		  else if (M2+M4+M6==3 || M8+M4+M6==3 || M2+M4+M8==3 || M2+M6+M8==3)
+		    butterflySkeletImage[row][col] = 255;
+		  else if ( (M1+M3==2 && M7+M8+M9>=1) || (M1+M7==2 && M3+M6+M9>=1) || (M7+M9==2 && M1+M2+M3>=1) || (M3+M9==2 && M1+M4+M7>=1) )
+		      butterflySkeletImage[row][col] = 255;
+		  else if ( (M2+M6+M7==3 && M3+M4+M8==0) || (M2+M4+M9==3 && M1+M6+M8==0) || (M3+M4+M8==3 && M2+M6+M7==0) || (M1+M6+M8==3 && M2+M4+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else{
+		    butterflySkeletImage[row][col] = 0;
+		    change = true;
+		  }
+		}
+		
+	      }
+	    }
+	  }
+	}while(false);
+
+
+	// fly
+	
+	do{
+	  
+	  bool change = true;
+	  vector<vector <int> > conM;
+	  conM.resize(Height_fly);
+	  for (int row=0; row<Height_fly; row++)
+	    conM[row].resize(Width_fly);
+	  
+	  for (int row=0; row<Height_fly; row++){
+	    for (int col=0; col<Width_fly; col++){
+	      flySkeletImage[row][col] = flyOutputImage[row][col];
+	    }
+	  }
+	  
+	  change = true;
+	  while (change){
+	    
+	    for (int row=0; row<Height_fly; row++){
+	      for (int col=0; col<Width_fly; col++){
+		  conM[row][col]=0;
+	      }
+	    }
+	    
+	    for (int row=1; row<Height_fly-1; row++){
+	      for (int col=1; col<Width_fly-1; col++){
+		
+		if (flySkeletImage[row][col]==255){
+		  
+		  int M1 = flySkeletImage[row-1][col-1];
+		  int M2 = flySkeletImage[row-1][col];
+		  int M3 = flySkeletImage[row-1][col+1];
+		  int M4 = flySkeletImage[row][col-1];
+		  int M6 = flySkeletImage[row][col+1];
+		  int M7 = flySkeletImage[row+1][col-1];
+		  int M8 = flySkeletImage[row+1][col];
+		  int M9 = flySkeletImage[row+1][col+1];
+		  
+		  int bond = 0;
+		  
+		  if (M1==255)
+		    bond += 1;
+		  if (M2==255)
+		    bond += 2;
+		  if (M3==255)
+		      bond += 1;
+		  if (M4==255)
+		    bond += 2;
+		  if (M6==255)
+		    bond += 2;
+		  if (M7==255)
+		    bond += 1;
+		  if (M8==255)
+		    bond += 2;
+		  if (M9==255)
+		    bond += 1;
+		    
+		  if (bond==4 && ((M1==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M9==255) || (M7==255 && M8==255 && M9==255) || (M1==255 && M4==255 && M7==255) || (M2+M6==255*2) || (M6+M8==255*2) || (M8+M4==255*2) || (M4+M2==255*2)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==6 && ((M1==255 && M2==255 && M3==255 && M6==255) || (M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255) || (M1==255 && M2==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255) || (M4==255 && M7==255 && M8==255 && M9==255) || (M6==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==7 && ((M1==255 && M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M7==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==8 && ((M1==0 && M4==0 && M7==0) || (M1==0 && M2==0 && M3==0) || (M3==0 && M6==0 && M9==0) || (M7==0 && M8==0 && M9==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==9 && ((M1==0 && M2==0) || (M2==0 && M3==0) || (M3==0 && M6==0) || (M6==0 && M9==0) || (M9==0 && M8==0) || (M8==0 && M7==0) || (M7==0 && M4==0) || (M4==0 && M1==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==10 && (M2==0 || M4==0 || M6==0 || M8==0))
+		    conM[row][col] = 1;
+
+		  if (bond==11 && (M1==0 || M3==0 || M9==0 || M7==0))
+		    conM[row][col] = 1;
+		  
+		}
+	      }
+	    }
+	    
+	    change = false;
+	    // unconditional mark pattern application - stage 2
+	    for (int row=1; row<Height_fly-1; row++){
+	      for (int col=1; col<Width_fly-1; col++){
+		
+		int M1 = conM[row-1][col-1];
+		int M2 = conM[row-1][col];
+		int M3 = conM[row-1][col+1];
+		int M4 = conM[row][col-1];
+		int M5 = conM[row][col];
+		int M6 = conM[row][col+1];
+		int M7 = conM[row+1][col-1];
+		int M8 = conM[row+1][col];
+		int M9 = conM[row+1][col+1];
+						
+		if (M5==1){
+		  if ( (M1==1 && M2+M3+M4+M6+M7+M8+M9==0) || (M3==1 && M1+M2+M4+M6+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if ( (M8==1 && M1+M2+M3+M4+M6+M7+M9==0) || (M6==1 && M1+M2+M3+M4+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if ((M2+M6==2 && M1+M3+M4+M7+M8+M9==0) || (M8+M6==2 && M1+M2+M3+M4+M7+M9==0) || (M4+M8==2 && M1+M2+M3+M6+M7+M9==0) || (M2+M4==2 && M1+M3+M6+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if (M1+M2+M4==3 || M6+M8+M9==3)
+		    butterflySkeletImage[row][col] = 255;
+		  else if (M2+M4+M6==3 || M8+M4+M6==3 || M2+M4+M8==3 || M2+M6+M8==3)
+		    butterflySkeletImage[row][col] = 255;
+		  else if ( (M1+M3==2 && M7+M8+M9>=1) || (M1+M7==2 && M3+M6+M9>=1) || (M7+M9==2 && M1+M2+M3>=1) || (M3+M9==2 && M1+M4+M7>=1) )
+		      butterflySkeletImage[row][col] = 255;
+		  else if ( (M2+M6+M7==3 && M3+M4+M8==0) || (M2+M4+M9==3 && M1+M6+M8==0) || (M3+M4+M8==3 && M2+M6+M7==0) || (M1+M6+M8==3 && M2+M4+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else{
+		    butterflySkeletImage[row][col] = 0;
+		    change = true;
+		  }
+		}
+		
+	      }
+	    }
+	  }
+	}while(false);
+
+	// probe
+
+	do{
+	  
+	  bool change = true;
+	  vector<vector <int> > conM;
+	  conM.resize(Height_probe);
+	  for (int row=0; row<Height_probe; row++)
+	    conM[row].resize(Width_probe);
+	  
+	  for (int row=0; row<Height_probe; row++){
+	    for (int col=0; col<Width_probe; col++){
+	      probeSkeletImage[row][col] = probeOutputImage[row][col];
+	    }
+	  }
+	  
+	  change = true;
+	  while (change){
+	    
+	    for (int row=0; row<Height_probe; row++){
+	      for (int col=0; col<Width_probe; col++){
+		  conM[row][col]=0;
+	      }
+	    }
+	    
+	    for (int row=1; row<Height_probe-1; row++){
+	      for (int col=1; col<Width_probe-1; col++){
+		
+		if (probeSkeletImage[row][col]==255){
+		  
+		  int M1 = probeSkeletImage[row-1][col-1];
+		  int M2 = probeSkeletImage[row-1][col];
+		  int M3 = probeSkeletImage[row-1][col+1];
+		  int M4 = probeSkeletImage[row][col-1];
+		  int M6 = probeSkeletImage[row][col+1];
+		  int M7 = probeSkeletImage[row+1][col-1];
+		  int M8 = probeSkeletImage[row+1][col];
+		  int M9 = probeSkeletImage[row+1][col+1];
+		  
+		  int bond = 0;
+		  
+		  if (M1==255)
+		    bond += 1;
+		  if (M2==255)
+		    bond += 2;
+		  if (M3==255)
+		      bond += 1;
+		  if (M4==255)
+		    bond += 2;
+		  if (M6==255)
+		    bond += 2;
+		  if (M7==255)
+		    bond += 1;
+		  if (M8==255)
+		    bond += 2;
+		  if (M9==255)
+		    bond += 1;
+		    
+		  if (bond==4 && ((M1==255 && M2==255 && M3==255) || (M3==255 && M6==255 && M9==255) || (M7==255 && M8==255 && M9==255) || (M1==255 && M4==255 && M7==255) || (M2+M6==255*2) || (M6+M8==255*2) || (M8+M4==255*2) || (M4+M2==255*2)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==6 && ((M1==255 && M2==255 && M3==255 && M6==255) || (M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255) || (M1==255 && M2==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255) || (M4==255 && M7==255 && M8==255 && M9==255) || (M6==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==7 && ((M1==255 && M2==255 && M3==255 && M6==255 && M9==255) || (M1==255 && M2==255 && M3==255 && M4==255 && M7==255) || (M1==255 && M4==255 && M7==255 && M8==255 && M9==255) || (M3==255 && M6==255 && M7==255 && M8==255 && M9==255)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==8 && ((M1==0 && M4==0 && M7==0) || (M1==0 && M2==0 && M3==0) || (M3==0 && M6==0 && M9==0) || (M7==0 && M8==0 && M9==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==9 && ((M1==0 && M2==0) || (M2==0 && M3==0) || (M3==0 && M6==0) || (M6==0 && M9==0) || (M9==0 && M8==0) || (M8==0 && M7==0) || (M7==0 && M4==0) || (M4==0 && M1==0)))
+		    conM[row][col] = 1;
+		  
+		  if (bond==10 && (M2==0 || M4==0 || M6==0 || M8==0))
+		    conM[row][col] = 1;
+
+		  if (bond==11 && (M1==0 || M3==0 || M9==0 || M7==0))
+		    conM[row][col] = 1;
+		  
+		}
+	      }
+	    }
+	    
+	    change = false;
+	    // unconditional mark pattern application - stage 2
+	    for (int row=1; row<Height_probe-1; row++){
+	      for (int col=1; col<Width_probe-1; col++){
+		
+		int M1 = conM[row-1][col-1];
+		int M2 = conM[row-1][col];
+		int M3 = conM[row-1][col+1];
+		int M4 = conM[row][col-1];
+		int M5 = conM[row][col];
+		int M6 = conM[row][col+1];
+		int M7 = conM[row+1][col-1];
+		int M8 = conM[row+1][col];
+		int M9 = conM[row+1][col+1];
+				
+		if (M5==1){
+
+		  if ( (M1==1 && M2+M3+M4+M6+M7+M8+M9==0) || (M3==1 && M1+M2+M4+M6+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if ( (M8==1 && M1+M2+M3+M4+M6+M7+M9==0) || (M6==1 && M1+M2+M3+M4+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if ((M2+M6==2 && M1+M3+M4+M7+M8+M9==0) || (M8+M6==2 && M1+M2+M3+M4+M7+M9==0) || (M4+M8==2 && M1+M2+M3+M6+M7+M9==0) || (M2+M4==2 && M1+M3+M6+M7+M8+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else if (M1+M2+M4==3 || M6+M8+M9==3)
+		    butterflySkeletImage[row][col] = 255;
+		  else if (M2+M4+M6==3 || M8+M4+M6==3 || M2+M4+M8==3 || M2+M6+M8==3)
+		    butterflySkeletImage[row][col] = 255;
+		  else if ( (M1+M3==2 && M7+M8+M9>=1) || (M1+M7==2 && M3+M6+M9>=1) || (M7+M9==2 && M1+M2+M3>=1) || (M3+M9==2 && M1+M4+M7>=1) )
+		      butterflySkeletImage[row][col] = 255;
+		  else if ( (M2+M6+M7==3 && M3+M4+M8==0) || (M2+M4+M9==3 && M1+M6+M8==0) || (M3+M4+M8==3 && M2+M6+M7==0) || (M1+M6+M8==3 && M2+M4+M9==0))
+		    butterflySkeletImage[row][col] = 255;
+		  else{
+		    butterflySkeletImage[row][col] = 0;
+		    change = true;
+		  }
+
+		}
+		
+	      }
+	    }
+	  }
+	}while(false);
+
+	// comment out if needed
+	// change output to show skeletonized images
+
+	for (int row=0; row<Height_fly; row++){
+	  for (int col=0; col<Width_fly; col++){
+	    flyOutputImage[row][col] = flySkeletImage[row][col];
+	  }
+	}
+
+	for (int row=0; row<Height_butterfly; row++){
+	  for (int col=0; col<Width_butterfly; col++){
+	    butterflyOutputImage[row][col] = butterflySkeletImage[row][col];
+	  }
+	}
+
+	for (int row=0; row<Height_probe; row++){
+	  for (int col=0; col<Width_probe; col++){
+	    probeOutputImage[row][col] = probeSkeletImage[row][col];
+	  }
+	}
+
+	// Count the number of intersections of 2 or more lines
+	
+	int butterflyIntersection = 0;
+	int flyIntersection = 0;
+	int probeIntersection = 0;
+
+	for (int row=0; row<Height_butterfly; row++){
+	  for (int col=0; col<Width_butterfly; col++){
+	    if (butterflyOutputImage[row][col]==255){
+	      if (butterflyOutputImage[row-1][col-1]+butterflyOutputImage[row-1][col]+butterflyOutputImage[row-1][col+1]+butterflyOutputImage[row][col-1]+butterflyOutputImage[row][col+1]+butterflyOutputImage[row+1][col-1]+butterflyOutputImage[row+1][col]+butterflyOutputImage[row+1][col+1]>=765)
+		butterflyIntersection++;
+	    }
+	  }
+	}
+
+	for (int row=0; row<Height_fly; row++){
+	  for (int col=0; col<Width_fly; col++){
+	    if (flyOutputImage[row][col]==255){
+	      if (flyOutputImage[row-1][col-1]+flyOutputImage[row-1][col]+flyOutputImage[row-1][col+1]+flyOutputImage[row][col-1]+flyOutputImage[row][col+1]+flyOutputImage[row+1][col-1]+flyOutputImage[row+1][col]+flyOutputImage[row+1][col+1]>=765)
+		flyIntersection++;
+	    }
+	  }
+	}
+
+	for (int row=0; row<Height_probe; row++){
+	  for (int col=0; col<Width_probe; col++){
+	    if (probeOutputImage[row][col]==255){
+	      if (probeOutputImage[row-1][col-1]+probeOutputImage[row-1][col]+probeOutputImage[row-1][col+1]+probeOutputImage[row][col-1]+probeOutputImage[row][col+1]+probeOutputImage[row+1][col-1]+probeOutputImage[row+1][col]+probeOutputImage[row+1][col+1]>=765)
+		probeIntersection++;
+	    }
+	  }
+	}
+
+	cout << "Number of intersections in butterfly: " << butterflyIntersection << endl;
+	cout << "Number of intersections in fly: " << flyIntersection << endl;
+	cout << "Number of intersections in probe: " << probeIntersection << endl;
+
+	if (abs(butterflyIntersection-probeIntersection)<=abs(flyIntersection-probeIntersection))
+	  cout << "The probe is a butterfly" << endl;
+	else
+	cout << "The probe is a fly" << endl;
+	  
+	// Write image data from image data matrix
+	
+	if (!(file=fopen(argv[4],"wb"))) {
+	  cout << "Cannot open file: " << argv[2] << endl;
+	  exit(1);
+	}
+	fwrite(butterflyOutputImage, sizeof(unsigned char), Height_butterfly*Width_butterfly, file);
+	fclose(file);
+
+	if (!(file=fopen(argv[5],"wb"))) {
+	  cout << "Cannot open file: " << argv[2] << endl;
+	  exit(1);
+	}
+	fwrite(flyOutputImage, sizeof(unsigned char), Height_fly*Width_fly, file);
+	fclose(file);
+
+	if (!(file=fopen(argv[6],"wb"))) {
+	  cout << "Cannot open file: " << argv[2] << endl;
+	  exit(1);
+	}
+	fwrite(probeOutputImage, sizeof(unsigned char), Height_probe*Width_probe, file);
+	fclose(file);
+       	
+	return 0;
+}

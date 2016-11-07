@@ -1,0 +1,1573 @@
+// Homework 3
+// This code implements texture Classification
+// Question 1a
+// This code takes no arguments
+// Input image names are hardcoded into the code. Change them there.
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <fstream>
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <sstream>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <limits.h>
+
+using namespace std;
+using namespace cv;
+
+extern int *k_means(double**, int, int, int, double, double**);
+
+double getEnergyVal(int filt1[5], int filt2[5], int** img){
+
+  int filt[5][5];
+
+  // compute the coefficients of the filters
+  int coeff1 = 0;
+  int coeff2 = 0;
+  for (int i=0; i<5; i++){
+    coeff1 += filt1[i];
+    coeff2 += filt2[i];
+  }
+  int coeff = (coeff1+2)*(coeff2+2);
+
+  // muiltiply both the filters to get the 2d filter filt1'*filt2
+  for (int row=0; row<5; row++){
+    for (int col=0; col<5; col++){
+      filt[row][col] = filt1[row]*filt2[col];
+    }
+  }
+
+  // get the DC component (mean) of the image
+  double DC = 0;
+  for (int row=0; row<128; row++){
+    for (int col=0; col<128; col++){
+      DC += img[row+2][col+2];
+    }
+  }
+  DC = DC/(128*128);
+
+  /*
+  // subtract DC component
+  for (int row=0; row<132; row++){
+    for (int col=0; col<132; col++){
+      img[row][col] -= DC;
+    }
+  }
+  */
+
+  // dummy energy response image
+  double** Energy = new double*[128];
+  for (int i=0; i<128; i++){
+    Energy[i] = new double[128];
+  }
+
+  // initialize the Energy matrix
+  for (int row=0; row<128; row++){
+    for (int col=0; col<128; col++){
+      Energy[row][col] = 0;
+    }
+  }
+
+  // fill it energy matrix with values
+  for (int row=0; row<128; row++){
+    for (int col=0; col<128; col++){
+      
+      // multiply each filter after subtracting DC component
+      for (int i=0; i<5; i++){
+	for (int j=0; j<5; j++){
+	  Energy[row][col] += filt[i][j]*(img[row+i][col+j]-DC);
+	}
+      }
+      Energy[row][col] /= coeff;
+      //interAvg += Energy[row][col];
+      /*if (filt1[0]==filt2[0] && filt1[1]==filt2[1] && filt1[0]==1 && filt1[1]==-4){
+	cout << interAvg << " " << Energy[row][col] << endl;
+	}*/
+
+    }
+  }
+
+  // get the average of the Energy
+  double AvgEnergy = 0;
+  for (int row=0; row<128; row++){
+    for (int col=0; col<128; col++){
+      AvgEnergy += Energy[row][col]*Energy[row][col];
+    }
+  }
+  AvgEnergy = AvgEnergy/(128*128);
+
+  // release Energy memory
+  for (int i=0; i<128; i++){
+    delete [] Energy[i];
+  }
+  delete [] Energy;
+
+  return AvgEnergy;
+
+}
+
+double* getEnergyVec(int** img){
+
+  int L[5] = {1, 4, 6, 4, 1};
+  int E[5] = {-1, -2, 0, 2, 1};
+  int S[5] = {-1, 0, 2, 0, -1};
+  int W[5] = {-1, 2, 0, -2, 1};
+  int R[5] = {1, -4, 6, -4, 1};
+
+  int** filtbank = new int*[5];
+  for (int i=0; i<5; i++){
+    filtbank[i] = new int[5];
+  }
+  filtbank[0] = L;
+  filtbank[1] = E;
+  filtbank[2] = S;
+  filtbank[3] = W;
+  filtbank[4] = R;
+
+  double* EnergyVec = new double[25];
+  
+  int counter=0;
+
+  for (int i=0; i<5; i++){
+    for (int j=0; j<5; j++){
+      EnergyVec[counter] = getEnergyVal(filtbank[i], filtbank[j], img);
+      counter++;
+    }
+  }
+
+  /*for (int i=0; i<5; i++){
+    delete [] filtbank[i];
+    }*/
+  delete [] filtbank;
+
+  return EnergyVec;
+
+}
+
+int main(int argc, char *argv[])
+
+{
+
+  FILE *file;
+  
+  // Allocate image data array
+  unsigned char tempImage[128][128];
+  int** texture1 = new int*[128+4];
+  for (int i=0; i<128+4; i++){
+    texture1[i] = new int[128+4];
+  }
+
+  // Allocate 12x25 feature vector
+  double** eVec25 = new double*[12];
+  for (int i=0; i<12; i++){
+    eVec25[i] = new double[25];
+  }
+
+  // array of image names
+  string basename = "./HW3 Images/P1/Texture";
+  string extension = ".raw";
+
+  ///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+  
+  for (int imgNum=1; imgNum<=12; imgNum++){
+
+    stringstream ss;
+    ss << imgNum;
+    string num = ss.str();
+
+    string image = basename+num+extension;
+    const char* imageName = image.c_str();
+
+    // Read Image into image data matrix
+    if (!(file=fopen(imageName,"rb"))) {
+      cout << "Cannot open file: " << imageName << endl;
+      exit(1);
+    }
+    fread(tempImage, sizeof(unsigned char), 128*128, file);
+    fclose(file);
+
+    for (int row=0; row<128; row++){
+      for (int col=0; col<128; col++){
+	texture1[row+2][col+2] = (int)tempImage[row][col];
+      }
+    }
+    
+    // pad elements to edges
+    // rows
+    for (int col=0; col<128; col++)
+      texture1[0][col+2] = texture1[3][col+2];
+    for (int col=0; col<128; col++)
+      texture1[1][col+2] = texture1[2][col+2];
+    for (int col=0; col<128; col++)
+      texture1[130][col+2] = texture1[129][col+2];
+    for (int col=0; col<128; col++)
+      texture1[131][col+2] = texture1[128][col+2];
+    
+    // cols
+    for (int row=0; row<128; row++)
+      texture1[row+2][0] = texture1[row+2][3];
+    for (int row=0; row<128; row++)
+      texture1[row+2][1] = texture1[row+2][2];
+    for (int row=0; row<128; row++)
+      texture1[row+2][130] = texture1[row+2][129];
+    for (int row=0; row<128; row++)
+      texture1[row+2][131] = texture1[row+2][128];
+
+    // corners
+    texture1[0][0] = texture1[3][3];
+    texture1[1][1] = texture1[2][2];
+    texture1[0][1] = texture1[2][3];
+    texture1[1][0] = texture1[3][2];
+    
+    texture1[0][130] = texture1[2][128];
+    texture1[0][131] = texture1[3][128];
+    texture1[1][130] = texture1[2][129];
+    texture1[1][131] = texture1[3][129];
+    
+    texture1[130][130] = texture1[129][129];
+    texture1[130][131] = texture1[128][129];
+    texture1[131][131] = texture1[128][128];
+    texture1[131][130] = texture1[129][128];
+    
+    texture1[130][0] = texture1[128][2];
+    texture1[130][1] = texture1[129][2];
+    texture1[131][0] = texture1[128][3];
+    texture1[131][1] = texture1[129][3];
+    
+    double* EnergyVec = getEnergyVec(texture1);
+    eVec25[imgNum-1] = EnergyVec;
+    
+    cout << "Energy Vector " << imgNum << endl;
+    for (int i=0; i<25; i++){
+      cout << EnergyVec[i] << " ";
+    }
+    cout << endl;
+
+  }
+  /*
+  // normalize the energy vector
+  for (int col=0; col<25; col++){
+
+    // find max min
+    double xmin = INT_MAX;
+    double xmax = INT_MIN;
+    for (int row=0; row<12; row++){
+      if (eVec25[row][col]<xmin)
+	xmin = eVec25[row][col];
+      if (eVec25[row][col]>xmax)
+	xmax = eVec25[row][col];
+    }
+    double span = xmax-xmin;
+
+    // normalize now
+    for (int row=0; row<12; row++){
+      if (span==0){
+	eVec25[row][col] = 0;
+      }
+      else {
+	eVec25[row][col] = (eVec25[row][col]-xmin)/(xmax-xmin);
+      }
+    }
+
+  }
+
+  // print normalized vectors
+  cout << "Normalized vectors " << endl;
+  for (int row=0; row<12; row++){
+    for (int col=0; col<25; col++){
+      cout << eVec25[row][col] << " ";
+    }
+    cout << endl;
+  }
+  cout << endl;
+  */
+  // find top and least most discriminant features
+  
+  // average the vectors for each image into one
+  double avgVec4x25[4][25] = {};
+  int imageSeq[12] = {0, 1, 2, 0, 2, 0, 3, 3, 1, 3, 2, 1};
+  for (int i=0; i<4; i++){
+    for(int j=0; j<25; j++){
+      avgVec4x25[i][j] = 0;
+    }
+  }
+
+  // fill with avg values for each image
+  for (int i=0; i<4; i++){
+    // sum
+    for (int iSnum=0; iSnum<12; iSnum++){
+      if (imageSeq[iSnum]==i){
+	for (int j=0; j<25; j++){
+	  avgVec4x25[i][j] += eVec25[iSnum][j];
+	}
+      }
+    }
+    // avg
+    for (int j=0; j<25; j++){
+      avgVec4x25[i][j] /= 3;
+    }
+  }
+      
+
+  // using standard dev as a metric
+  char filtOrder[5] = {'L', 'E', 'S', 'W', 'R'};
+  double stdev[25] = {};
+  double dummyStdev[25] = {};
+  for (int col=0; col<25; col++){
+    
+    // find mean
+    double mean = 0;
+    for (int row=0; row<4; row++){
+      mean += avgVec4x25[row][col];
+    }
+    mean = mean/4;
+
+    // std dev
+    double stdDev = 0;
+    for (int row=0; row<4; row++){
+      stdDev += pow(avgVec4x25[row][col]-mean, 2);
+    }
+    stdDev /= 4;
+    stdDev = sqrt(stdDev);
+
+    stdev[col] = stdDev;
+    dummyStdev[col] = stdDev;
+  }
+  sort(stdev, stdev+25);
+
+  cout << "Standard deviations "<< endl;
+  cout << "Sorted standard deviations " << endl;
+  for (int i=0; i<25; i++)
+    cout << stdev[i] << " ";
+  cout << endl;
+  cout << "Unsorted standard deviations " << endl;
+  for (int i=0; i<25; i++)
+    cout << dummyStdev[i] << " ";
+  cout << endl;
+  
+  // find top 
+  int pos1 = -1;
+  int pos2 = -1;
+  for (int i=0; i<25; i++){
+    if (stdev[24]==dummyStdev[i]){
+      pos1 = i;
+    }
+    if (stdev[0]==dummyStdev[i]){
+      pos2 = i;
+    }
+  }
+  cout << "Most discriminant power is with " << filtOrder[int(pos1/5)] << filtOrder[pos1%5]<< endl;
+  cout << "Least discriminant power is with " << filtOrder[int(pos2/5)] << filtOrder[pos2%5]<< endl;
+
+
+  // pca using opencv
+  double norm_eVec[12][25];
+  for (int row=0; row<12; row++){
+    for (int col=0; col<25; col++){
+      norm_eVec[row][col] = eVec25[row][col];
+    }
+  }
+
+  Mat cv_eVec25 = Mat(12, 25, CV_64F, norm_eVec);
+
+  PCA pca(cv_eVec25, Mat(), CV_PCA_DATA_AS_ROW, 3);
+  
+  Mat proj_eVec3 = Mat::zeros(12, 3, CV_32F);
+  
+  pca.project(cv_eVec25, proj_eVec3);
+  cout << "Projected vectors into 3D space " << endl;
+  cout << proj_eVec3 << endl;
+
+  // transfer the feature vectors to c++ matrix
+  double** eVec3 = new double*[12];
+  for (int row=0; row<12; row++){
+    eVec3[row] = new double[3];
+  }
+  
+  for (int row=0; row<12; row++){
+    for (int col=0; col<3; col++){
+      eVec3[row][col] = proj_eVec3.at<double>(row,col);
+    }
+  }
+
+  /*
+  // normalize the vectors again after pca
+  for (int col=0; col<3; col++){
+
+    // find max min
+    double xmin = INT_MAX;
+    double xmax = INT_MIN;
+    for (int row=0; row<12; row++){
+      if (eVec3[row][col]<xmin)
+	xmin = eVec3[row][col];
+      if (eVec3[row][col]>xmax)
+	xmax = eVec3[row][col];
+    }
+
+    // normalize now
+    for (int row=0; row<12; row++){
+      eVec3[row][col] = (eVec3[row][col]-xmin)/(xmax-xmin);
+    }
+
+  }
+
+  for (int row=0; row<12; row++){
+    cout << eVec3[row][0] << " " << eVec3[row][1] << " " << eVec3[row][2] << endl;
+  }
+  */
+
+  // K-means
+
+  // 25-D vectors
+
+  int* class_25D = k_means(eVec25, 12, 25, 4, 0.0001, 0);
+
+  cout << "clustering using 25d vectors " << endl;
+  for (int i=0; i<12; i++){
+    cout << class_25D[i] << " ";
+  }
+  cout << endl;
+
+  // 3-D vectors
+  
+  int* class_3D = k_means(eVec3, 12, 3, 4, 0.0001, 0);
+
+  cout << "clustering using 3d vectors " << endl;
+  for (int i=0; i<12; i++){
+    cout << class_3D[i] << " ";
+  }
+  cout << endl;
+
+  // clear memory
+  
+  for (int i=0; i<128; i++){
+    delete [] texture1[i];
+  }
+  delete [] texture1;
+  
+  return 0;
+}
+
+
+// Homework 3
+// This code implements texture Segmentation
+// Question 1b
+// This code takes no arguments
+// The image paths are hard coded. change them here inside the script
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <fstream>
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <sstream>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <limits.h>
+
+using namespace std;
+using namespace cv;
+
+extern int *k_means(double**, int, int, int, double, double**);
+
+double** getEnergyImg(int filt1[5], int filt2[5], int** img, int extraWin, int Height, int Width){
+
+  int filt[5][5];
+
+  // compute the coefficients of the filters
+  int coeff1 = 0;
+  int coeff2 = 0;
+  for (int i=0; i<5; i++){
+    coeff1 += filt1[i];
+    coeff2 += filt2[i];
+  }
+  int coeff = (coeff1+2)*(coeff2+2);
+
+  // muiltiply both the filters to get the 2d filter filt1'*filt2
+  for (int row=0; row<5; row++){
+    for (int col=0; col<5; col++){
+      filt[row][col] = filt1[row]*filt2[col];
+    }
+  }
+
+  // get the DC component (mean) of the image
+  double DC = 0;
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+      DC += img[row+2][col+2];
+    }
+  }
+  DC = DC/(Height*Width);
+
+  // energy response image
+  double** Energy = new double*[Height];
+  for (int i=0; i<Height; i++){
+    Energy[i] = new double[Width];
+  }
+
+  // initialize the Energy matrix
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+      Energy[row][col] = 0;
+    }
+  }
+  
+  // fill the energy matrix with values
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+
+      double avgEnergy = 0;
+      int winCount = 0;
+
+      // convolve over window
+      for (int wrow=row+2; wrow<Height+2*extraWin-2; wrow++){
+	for (int wcol=col+2; wcol<col+2*extraWin-2; wcol++){
+	        
+	  winCount++;
+	  // multiply each filter after subtracting DC component
+	  for (int i=0; i<5; i++){
+	    for (int j=0; j<5; j++){
+	      avgEnergy += pow(filt[i][j]*(img[wrow-2+i][wcol-2+j]-DC)*(1.0/coeff),2);
+	    }
+	  }
+
+	}
+      }
+      avgEnergy /= winCount;
+      Energy[row][col] = avgEnergy;
+    }
+  }
+
+  return Energy;
+
+}
+
+double*** getEnergyMap(int** img, int extraWin, int Height, int Width){
+
+  int L[5] = {1, 4, 6, 4, 1};
+  int E[5] = {-1, -2, 0, 2, 1};
+  int S[5] = {-1, 0, 2, 0, -1};
+  int W[5] = {-1, 2, 0, -2, 1};
+  int R[5] = {1, -4, 6, -4, 1};
+
+  int** filtbank = new int*[5];
+  for (int i=0; i<5; i++){
+    filtbank[i] = new int[5];
+  }
+  filtbank[0] = L;
+  filtbank[1] = E;
+  filtbank[2] = S;
+  filtbank[3] = W;
+  filtbank[4] = R;
+
+  double*** EnergyMap = new double**[Height];
+  for (int row=0; row<Height; row++){
+    EnergyMap[row] = new double*[Width];
+    for (int col=0; col<Width; col++){
+      EnergyMap[row][col] = new double[25];
+    }
+  }
+ 
+  int counter = 0;
+  double** dummyEnergy;
+
+  for (int i=0; i<5; i++){
+    for (int j=0; j<5; j++){
+      cout << "filter: " << counter << endl;
+      dummyEnergy = getEnergyImg(filtbank[i], filtbank[j], img, extraWin, Height, Width);
+      
+      // store the energy images in EnergyMap
+      for (int row=0; row<Height; row++){
+	for(int col=0; col<Width; col++){
+	  EnergyMap[row][col][counter] = dummyEnergy[row][col];
+	}
+      }
+      counter++;
+
+    }
+  }
+
+  delete [] filtbank;
+
+  return EnergyMap;
+
+}
+
+int main(int argc, char *argv[])
+
+{
+
+  FILE *file;
+
+  int winSize = 13;
+  
+  // Allocate image data array
+  unsigned char tempImage[500][425];
+  unsigned char temp2Image[512][512];
+  int** Comb1 = new int*[500+winSize-1];
+  for (int i=0; i<500+winSize-1; i++){
+    Comb1[i] = new int[425+winSize-1];
+  }
+  int** Comb2 = new int*[512+winSize-1];
+  for (int i=0; i<512+winSize-1; i++){
+    Comb2[i] = new int[512+winSize-1];
+  }
+
+
+  ///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+
+
+  int Height = 500;
+  int Width = 425;
+
+  // Read Image into image data matrix
+  if (!(file=fopen("./HW3 Images/P1/Comb_1.raw","rb"))) {
+    cout << "Cannot open file: " << "./HW3 Images/P1/Comb_1.raw" << endl;
+    exit(1);
+  }
+  fread(tempImage, sizeof(unsigned char), Height*Width, file);
+  fclose(file);
+
+  int extraWin = (int)winSize/2;
+
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+      Comb1[row+extraWin][col+extraWin] = (int)tempImage[row][col];
+    }
+  }
+    
+  // pad elements to edges
+  // rows
+  for (int i=0; i<extraWin; i++){
+    for(int col=0; col<Width; col++){
+      Comb1[i][col+extraWin] = Comb1[extraWin*2-1-i][col+extraWin];
+    }
+  }
+  for (int i=Height+extraWin; i<Height+extraWin*2; i++){
+    for(int col=0; col<Width; col++){
+      Comb1[i][col+extraWin] = Comb1[-i+Height+extraWin+Height+extraWin-1][col+extraWin];
+    }
+  }
+  
+    
+  // cols
+  for (int j=0; j<extraWin; j++){
+    for (int row=0; row<Height; row++){
+      Comb1[row+extraWin][j] = Comb1[row+extraWin][-j+extraWin*2-1];
+    }
+  }
+  for (int j=Width+extraWin; j<Width+extraWin*2; j++){
+    for (int row=0; row<Height; row++){
+      Comb1[row+extraWin][j] = Comb1[row+extraWin][-j+Width+extraWin+Width+extraWin-1];
+    }
+  }
+
+
+  // corners
+  for (int row=0; row<extraWin; row++){
+    for (int col=0; col<extraWin; col++){
+      Comb1[row][col] = Comb1[row+extraWin][col+extraWin];
+    }
+  }
+  
+  for (int row=0; row<extraWin; row++){
+    for (int col=Width+extraWin; col<Width+2*extraWin; col++){
+      Comb1[row][col] = Comb1[row][col-extraWin];
+    }
+  }
+  
+  for (int row=Height+extraWin; row<Height+2*extraWin; row++){
+    for (int col=Width+extraWin; col<Width+2*extraWin; col++){
+      Comb1[row][col] = Comb1[row-extraWin][col-extraWin];
+    }
+  }
+
+  for (int row=Height+extraWin; row<Height+2*extraWin; row++){
+    for (int col=0; col<extraWin; col++){
+      Comb1[row][col] = Comb1[row-extraWin][col];
+    }
+  }
+    
+  double*** EnergyMap;
+  EnergyMap = getEnergyMap(Comb1, extraWin, Height, Width);
+
+  // create data points matrix
+  double** eVec25 = new double*[Height*Width];
+  for (int row=0; row<Height*Width; row++){
+    eVec25[row] = new double[25];
+  }
+
+  int counter=0;
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+      for (int featDim=0; featDim<25; featDim++){
+	eVec25[counter][featDim] = EnergyMap[row][col][featDim];
+      }
+      counter++;
+    }
+  }
+
+  // normalize the values with LL filter values
+  double divVal = 0;
+  for (int row=0; row<Height*Width; row++){
+    divVal += eVec25[row][0];
+  }
+  divVal /= (Height*Width);
+
+  for (int row=0; row<Height*Width; row++){
+    for (int col=0; col<25; col++){
+      eVec25[row][col] /= divVal;
+    }
+  }
+
+  // K-means
+
+  // 25-D vectors
+
+  int* class_25D = k_means(eVec25, Height*Width, 25, 4, 0.0001, 0);
+
+  // output image
+  int grayLevels[4] = {0, 64, 128, 255};
+  unsigned char Comb1Segment[Height][Width];
+
+  counter=0;
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+      Comb1Segment[row][col] = (unsigned char)grayLevels[class_25D[counter]];
+      counter++;
+    }
+  }
+
+  if (!(file=fopen("Comb1Segment.raw","wb"))) {
+    cout << "Cannot open file: " << "Comb1Segment.raw" << endl;
+    exit(1);
+  }
+  fwrite(Comb1Segment, sizeof(unsigned char), Height*Width, file);
+  fclose(file);
+
+  
+  // comb2
+  Height = 512;
+  Width = 512;
+
+  // Read Image into image data matrix
+  if (!(file=fopen("./HW3 Images/P1/Comb_2.raw","rb"))) {
+    cout << "Cannot open file: " << "./HW3 Images/P1/Comb_2.raw" << endl;
+    exit(1);
+  }
+  fread(temp2Image, sizeof(unsigned char), Height*Width, file);
+  fclose(file);
+
+  int extraWin = (int)winSize/2;
+
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+      Comb2[row+extraWin][col+extraWin] = (int)tempImage[row][col];
+    }
+  }
+    
+  // pad elements to edges
+  // rows
+  for (int i=0; i<extraWin; i++){
+    for(int col=0; col<Width; col++){
+      Comb2[i][col+extraWin] = Comb2[extraWin*2-1-i][col+extraWin];
+    }
+  }
+  for (int i=Height+extraWin; i<Height+extraWin*2; i++){
+    for(int col=0; col<Width; col++){
+      Comb2[i][col+extraWin] = Comb2[-i+Height+extraWin+Height+extraWin-1][col+extraWin];
+    }
+  }
+  
+    
+  // cols
+  for (int j=0; j<extraWin; j++){
+    for (int row=0; row<Height; row++){
+      Comb2[row+extraWin][j] = Comb2[row+extraWin][-j+extraWin*2-1];
+    }
+  }
+  for (int j=Width+extraWin; j<Width+extraWin*2; j++){
+    for (int row=0; row<Height; row++){
+      Comb2[row+extraWin][j] = Comb2[row+extraWin][-j+Width+extraWin+Width+extraWin-1];
+    }
+  }
+
+
+  // corners
+  for (int row=0; row<extraWin; row++){
+    for (int col=0; col<extraWin; col++){
+      Comb2[row][col] = Comb2[row+extraWin][col+extraWin];
+    }
+  }
+  
+  for (int row=0; row<extraWin; row++){
+    for (int col=Width+extraWin; col<Width+2*extraWin; col++){
+      Comb2[row][col] = Comb2[row][col-extraWin];
+    }
+  }
+  
+  for (int row=Height+extraWin; row<Height+2*extraWin; row++){
+    for (int col=Width+extraWin; col<Width+2*extraWin; col++){
+      Comb2[row][col] = Comb2[row-extraWin][col-extraWin];
+    }
+  }
+
+  for (int row=Height+extraWin; row<Height+2*extraWin; row++){
+    for (int col=0; col<extraWin; col++){
+      Comb2[row][col] = Comb2[row-extraWin][col];
+    }
+  }
+    
+  double*** EnergyMap;
+  EnergyMap = getEnergyMap(Comb2, extraWin, Height, Width);
+
+  // create data points matrix
+  double** eVec25 = new double*[Height*Width];
+  for (int row=0; row<Height*Width; row++){
+    eVec25[row] = new double[25];
+  }
+
+  int counter=0;
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+      for (int featDim=0; featDim<25; featDim++){
+	eVec25[counter][featDim] = EnergyMap[row][col][featDim];
+      }
+      counter++;
+    }
+  }
+
+  // normalize the values with LL filter values
+  double divVal = 0;
+  for (int row=0; row<Height*Width; row++){
+    divVal += eVec25[row][0];
+  }
+  divVal /= (Height*Width);
+
+  for (int row=0; row<Height*Width; row++){
+    for (int col=0; col<25; col++){
+      eVec25[row][col] /= divVal;
+    }
+  }
+
+  // K-means
+
+  // 25-D vectors
+
+  int* class_25D = k_means(eVec25, Height*Width, 25, 6, 0.0001, 0);
+
+  // output image
+  int grayLevels[6] = {0, 51, 102, 153, 204, 255};
+  unsigned char Comb2Segment[Height][Width];
+
+  counter=0;
+  for (int row=0; row<Height; row++){
+    for (int col=0; col<Width; col++){
+      Comb2Segment[row][col] = (unsigned char)grayLevels[class_25D[counter]];
+      counter++;
+    }
+  }
+
+  if (!(file=fopen("Comb2Segment.raw","wb"))) {
+    cout << "Cannot open file: " << "Comb2Segment.raw" << endl;
+    exit(1);
+  }
+  fwrite(Comb2Segment, sizeof(unsigned char), Height*Width, file);
+  fclose(file);
+
+  return 0;
+}
+
+
+// Homework 3
+// This code implements SIFT and SURF detection
+// Question 2a
+// This code takes no arguments
+// The image paths are hardcoded inside the script. change them here if needed.
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <fstream>
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <sstream>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <limits.h>
+
+using namespace std;
+using namespace cv;
+
+int main(int argc, char *argv[])
+
+{
+
+  FILE *file;
+
+  // dimensions
+  int jeepRow = 500;
+  int jeepCol= 380;
+  int busRow = 450;
+  int busCol = 240;
+  
+  // Allocate image data array
+  unsigned char jeepImage[jeepRow][jeepCol][3];
+  unsigned char busImage[busRow][busCol][3];
+
+  ///////////////////////// INSERT YOUR PROCESSING CODE HERE /////////////////////////
+
+  // transfer Images to opencv
+  Mat jeepCVImg = imread("./HW3 Images/P2/jeep.jpg", CV_LOAD_IMAGE_UNCHANGED);
+  Mat busCVImg = imread("./HW3 Images/P2/bus.jpg", CV_LOAD_IMAGE_UNCHANGED);
+
+  // convert to grayscale
+  Mat jeepCVImg_gray;
+  Mat busCVImg_gray;
+  cvtColor(jeepCVImg, jeepCVImg_gray, CV_BGR2GRAY);
+  cvtColor(busCVImg, busCVImg_gray, CV_BGR2GRAY);
+
+  // get SIFT features
+  SiftFeatureDetector siftDetector;
+  vector<KeyPoint> jeepKeypoints, busKeypoints;
+  // detect
+  siftDetector.detect(jeepCVImg_gray, jeepKeypoints);
+  siftDetector.detect(busCVImg_gray, busKeypoints);
+  // draw
+  drawKeypoints(jeepCVImg_gray, jeepKeypoints, jeepCVImg);  
+  drawKeypoints(busCVImg_gray, busKeypoints, busCVImg);  
+
+  // write resulting keypoints to image
+  // jeep
+  if (jeepCVImg.empty()){
+    cout << "empty image found " << endl;
+  }
+  namedWindow("jeep SIFT features", CV_WINDOW_AUTOSIZE); 
+  imshow("jeep SIFT features", jeepCVImg);
+  waitKey(0);
+  // bus
+  if (busCVImg.empty()){
+    cout << "empty image found " << endl;
+  }
+  namedWindow("bus SIFT features", CV_WINDOW_AUTOSIZE); 
+  imshow("bus SIFT features", busCVImg);
+  waitKey(0);
+
+  // get SURF features
+  int threshold = 3000;
+  SurfFeatureDetector surfDetector(threshold);
+  vector<KeyPoint> jeepSurfKeypoints, busSurfKeypoints;
+  // detect
+  surfDetector.detect(jeepCVImg_gray, jeepSurfKeypoints);
+  surfDetector.detect(busCVImg_gray, busSurfKeypoints);
+  // draw
+  drawKeypoints(jeepCVImg_gray, jeepSurfKeypoints, jeepCVImg);  
+  drawKeypoints(busCVImg_gray, busSurfKeypoints, busCVImg);  
+
+  // write resulting keypoints to image
+  // jeep
+  if (jeepCVImg.empty()){
+    cout << "empty image found " << endl;
+  }
+  namedWindow("jeep SURF features", CV_WINDOW_AUTOSIZE); 
+  imshow("jeep SURF features", jeepCVImg);
+  waitKey(0);
+  // bus
+  if (busCVImg.empty()){
+    cout << "empty image found " << endl;
+  }
+  namedWindow("bus SURF features", CV_WINDOW_AUTOSIZE); 
+  imshow("bus SURF features", busCVImg);
+  waitKey(0);
+  
+  return 0;
+}
+
+
+// Homework 3
+// This code implements SIFT and SURF feature matching
+// Question 2b
+// This code takes no arguments
+// The image paths are hardcoded here. change them if needed.
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <fstream>
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <sstream>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <limits.h>
+
+using namespace std;
+using namespace cv;
+
+int main(int argc, char *argv[])
+
+{
+
+  FILE *file;
+
+  // transfer Images to opencv
+  Mat rav4_1CVImg = imread("./HW3 Images/P2/rav4_1.jpg", CV_LOAD_IMAGE_UNCHANGED);
+  Mat rav4_2CVImg = imread("./HW3 Images/P2/rav4_2.jpg", CV_LOAD_IMAGE_UNCHANGED);
+  Mat jeepCVImg = imread("./HW3 Images/P2/jeep.jpg", CV_LOAD_IMAGE_UNCHANGED);
+  Mat busCVImg = imread("./HW3 Images/P2/bus.jpg", CV_LOAD_IMAGE_UNCHANGED);
+
+  // convert to grayscale
+  Mat rav4_1CVImg_gray;
+  Mat rav4_2CVImg_gray;
+  Mat jeepCVImg_gray;
+  Mat busCVImg_gray;
+  cvtColor(rav4_1CVImg, rav4_1CVImg_gray, CV_BGR2GRAY);
+  cvtColor(rav4_2CVImg, rav4_2CVImg_gray, CV_BGR2GRAY);
+  cvtColor(jeepCVImg, jeepCVImg_gray, CV_BGR2GRAY);
+  cvtColor(busCVImg, busCVImg_gray, CV_BGR2GRAY);
+
+  // SIFT
+  // get SIFT features
+  SiftFeatureDetector siftDetector;
+  vector<KeyPoint> rav4_1SiftKeypoints, rav4_2SiftKeypoints, jeepSiftKeypoints, busSiftKeypoints;
+  // detect keypoints
+  siftDetector.detect(rav4_1CVImg_gray, rav4_1SiftKeypoints);
+  siftDetector.detect(rav4_2CVImg_gray, rav4_2SiftKeypoints);
+  siftDetector.detect(jeepCVImg_gray, jeepSiftKeypoints);
+  siftDetector.detect(busCVImg_gray, busSiftKeypoints);
+
+  // get descriptors
+  SiftDescriptorExtractor siftExtractor;
+  Mat rav4_1SiftDescriptors, rav4_2SiftDescriptors, jeepSiftDescriptors, busSiftDescriptors;
+  siftExtractor.compute( rav4_1CVImg_gray, rav4_1SiftKeypoints, rav4_1SiftDescriptors );
+  siftExtractor.compute( rav4_2CVImg_gray, rav4_2SiftKeypoints, rav4_2SiftDescriptors );
+  siftExtractor.compute( jeepCVImg_gray, jeepSiftKeypoints, jeepSiftDescriptors );
+  siftExtractor.compute( busCVImg_gray, busSiftKeypoints, busSiftDescriptors );
+
+  // matching of descriptors
+  FlannBasedMatcher siftMatcher;
+  vector<vector< DMatch > > siftMatches_rav4_1_rav4_2, siftMatches_rav4_1_jeep, siftMatches_rav4_1_bus;
+  siftMatcher.knnMatch( rav4_1SiftDescriptors, rav4_2SiftDescriptors, siftMatches_rav4_1_rav4_2, 2);
+  siftMatcher.knnMatch( rav4_1SiftDescriptors, jeepSiftDescriptors, siftMatches_rav4_1_jeep, 2);
+  siftMatcher.knnMatch( rav4_1SiftDescriptors, busSiftDescriptors, siftMatches_rav4_1_bus, 2);
+
+  // Sift matching setup for rav4_1 and rav4_2
+  /*
+  double maxDist = 0; double minDist = 100;
+
+  // get min and max distance
+  for( int i = 0; i < rav4_1SiftDescriptors.rows; i++ ){
+    double dist = siftMatches_rav4_1_rav4_2[i].distance;
+    if( dist < minDist )
+      minDist = dist;
+    if( dist > maxDist )
+      maxDist = dist;
+  }
+
+  cout << "Max distance " << maxDist << endl;
+  cout << "Min distance " << minDist << endl;
+  */
+
+  // find good matches
+  vector< DMatch > goodSiftMatches_rav4_1_rav4_2;
+
+  /*
+  for( int i = 0; i < rav4_1SiftDescriptors.rows; i++ ){
+    if( siftMatches_rav4_1_rav4_2[i].distance <= 2*minDist ){
+      goodSiftMatches_rav4_1_rav4_2.push_back( siftMatches_rav4_1_rav4_2[i]);
+    }
+  }
+  */
+  for (int i=0; i<siftMatches_rav4_1_rav4_2.size(); i++){
+    if (siftMatches_rav4_1_rav4_2[i][0].distance<0.8*siftMatches_rav4_1_rav4_2[i][1].distance){
+      goodSiftMatches_rav4_1_rav4_2.push_back(siftMatches_rav4_1_rav4_2[i][0]);
+    }
+  }
+
+  // Draw the good matches
+  Mat rav4_1_SiftMatch_rav4_2;
+  drawMatches( rav4_1CVImg_gray, rav4_1SiftKeypoints, rav4_2CVImg_gray, rav4_2SiftKeypoints,
+               goodSiftMatches_rav4_1_rav4_2, rav4_1_SiftMatch_rav4_2, Scalar::all(-1), Scalar::all(-1),
+               vector<char>());//, DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
+  // Show matched matches
+  namedWindow("rav4_1 and rav4_2 matched SIFT features", CV_WINDOW_AUTOSIZE); 
+  imshow( "rav4_1 and rav4_2 matched SIFT features", rav4_1_SiftMatch_rav4_2 );
+
+  waitKey(0);
+
+  // Sift matching setup for rav4_1 and jeep
+  /*
+  maxDist = 0; minDist = 100;
+
+  // get min and max distance
+  for( int i = 0; i < rav4_1SiftDescriptors.rows; i++ ){
+    double dist = siftMatches_rav4_1_jeep[i].distance;
+    if( dist < minDist )
+      minDist = dist;
+    if( dist > maxDist )
+      maxDist = dist;
+  }
+
+  cout << "Max distance " << maxDist << endl;
+  cout << "Min distance " << minDist << endl;
+  */
+
+  // find good matches
+  vector< DMatch > goodSiftMatches_rav4_1_jeep;
+
+  /*
+  for( int i = 0; i < rav4_1SiftDescriptors.rows; i++ ){
+    if( siftMatches_rav4_1_jeep[i].distance <= 2*minDist ){
+      goodSiftMatches_rav4_1_jeep.push_back( siftMatches_rav4_1_jeep[i]);
+    }
+  }
+  */
+  for (int i=0; i<siftMatches_rav4_1_jeep.size(); i++){
+    if (siftMatches_rav4_1_jeep[i][0].distance<0.8*siftMatches_rav4_1_jeep[i][1].distance){
+      goodSiftMatches_rav4_1_jeep.push_back(siftMatches_rav4_1_jeep[i][0]);
+    }
+  }
+
+  // Draw the good matches
+  Mat rav4_1_SiftMatch_jeep;
+  drawMatches( rav4_1CVImg_gray, rav4_1SiftKeypoints, jeepCVImg_gray, jeepSiftKeypoints,
+               goodSiftMatches_rav4_1_jeep, rav4_1_SiftMatch_jeep, Scalar::all(-1), Scalar::all(-1),
+               vector<char>());//, DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
+  // Show matched matches
+  namedWindow("rav4_1 and jeep matched SIFT features", CV_WINDOW_AUTOSIZE); 
+  imshow( "rav4_1 and jeep matched SIFT features", rav4_1_SiftMatch_jeep );
+
+  waitKey(0);
+
+  // Sift matching setup for rav4_1 and bus
+
+  /*
+  maxDist = 0; minDist = 100;
+
+  // get min and max distance
+  for( int i = 0; i < rav4_1SiftDescriptors.rows; i++ ){
+    double dist = siftMatches_rav4_1_bus[i].distance;
+    if( dist < minDist )
+      minDist = dist;
+    if( dist > maxDist )
+      maxDist = dist;
+  }
+
+  cout << "Max distance " << maxDist << endl;
+  cout << "Min distance " << minDist << endl;
+  */
+
+  // find good matches
+  vector< DMatch > goodSiftMatches_rav4_1_bus;
+
+  /*
+  for( int i = 0; i < rav4_1SiftDescriptors.rows; i++ ){
+    if( siftMatches_rav4_1_bus[i].distance <= 2*minDist ){
+      goodSiftMatches_rav4_1_bus.push_back( siftMatches_rav4_1_bus[i]);
+    }
+  }
+  */
+  for (int i=0; i<siftMatches_rav4_1_bus.size(); i++){
+    if (siftMatches_rav4_1_bus[i][0].distance<0.8*siftMatches_rav4_1_bus[i][1].distance){
+      goodSiftMatches_rav4_1_bus.push_back(siftMatches_rav4_1_bus[i][0]);
+    }
+  }
+
+  // Draw the good matches
+  Mat rav4_1_SiftMatch_bus;
+  drawMatches( rav4_1CVImg_gray, rav4_1SiftKeypoints, busCVImg_gray, busSiftKeypoints,
+               goodSiftMatches_rav4_1_bus, rav4_1_SiftMatch_bus, Scalar::all(-1), Scalar::all(-1),
+               vector<char>());//, DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
+  // Show matched matches
+  namedWindow("rav4_1 and bus matched SIFT features", CV_WINDOW_AUTOSIZE); 
+  imshow( "rav4_1 and bus matched SIFT features", rav4_1_SiftMatch_bus );
+
+  waitKey(0);
+
+  // SURF
+  // get SURF features
+
+  // detect keypoints
+  int threshold = 3000;
+  SurfFeatureDetector surfDetector(threshold);
+  vector<KeyPoint> rav4_1SurfKeypoints, rav4_2SurfKeypoints, jeepSurfKeypoints, busSurfKeypoints;
+  surfDetector.detect(rav4_1CVImg_gray, rav4_1SurfKeypoints);
+  surfDetector.detect(rav4_2CVImg_gray, rav4_2SurfKeypoints);
+  surfDetector.detect(jeepCVImg_gray, jeepSurfKeypoints);
+  surfDetector.detect(busCVImg_gray, busSurfKeypoints);
+
+  // get descriptors
+  SurfDescriptorExtractor surfExtractor;
+  Mat rav4_1SurfDescriptors, rav4_2SurfDescriptors, jeepSurfDescriptors, busSurfDescriptors;
+  surfExtractor.compute( rav4_1CVImg_gray, rav4_1SurfKeypoints, rav4_1SurfDescriptors );
+  surfExtractor.compute( rav4_2CVImg_gray, rav4_2SurfKeypoints, rav4_2SurfDescriptors );
+  surfExtractor.compute( jeepCVImg_gray, jeepSurfKeypoints, jeepSurfDescriptors );
+  surfExtractor.compute( busCVImg_gray, busSurfKeypoints, busSurfDescriptors );
+
+  // matching of descriptors
+  FlannBasedMatcher surfMatcher;
+  vector<vector< DMatch > > surfMatches_rav4_1_rav4_2, surfMatches_rav4_1_jeep, surfMatches_rav4_1_bus;
+  surfMatcher.knnMatch( rav4_1SurfDescriptors, rav4_2SurfDescriptors, surfMatches_rav4_1_rav4_2, 2);
+  surfMatcher.knnMatch( rav4_1SurfDescriptors, jeepSurfDescriptors, surfMatches_rav4_1_jeep, 2);
+  surfMatcher.knnMatch( rav4_1SurfDescriptors, busSurfDescriptors, surfMatches_rav4_1_bus, 2);
+
+  // Surf matching setup for rav4_1 and rav4_2
+  /*
+  maxDist = 0; minDist = 100;
+
+  // get min and max distance
+  for( int i = 0; i < rav4_1SurfDescriptors.rows; i++ ){
+    double dist = surfMatches_rav4_1_rav4_2[i].distance;
+    if( dist < minDist )
+      minDist = dist;
+    if( dist > maxDist )
+      maxDist = dist;
+  }
+
+  cout << "Max distance " << maxDist << endl;
+  cout << "Min distance " << minDist << endl;
+  */
+  // find good matches
+  vector< DMatch > goodSurfMatches_rav4_1_rav4_2;
+
+  /*
+  for( int i = 0; i < rav4_1SurfDescriptors.rows; i++ ){
+    if( surfMatches_rav4_1_rav4_2[i].distance <= 1.5*minDist ){
+      goodSurfMatches_rav4_1_rav4_2.push_back( surfMatches_rav4_1_rav4_2[i]);
+    }
+  }
+  */
+  for (int i=0; i<surfMatches_rav4_1_rav4_2.size(); i++){
+    if (surfMatches_rav4_1_rav4_2[i][0].distance<0.8*surfMatches_rav4_1_rav4_2[i][1].distance){
+      goodSurfMatches_rav4_1_rav4_2.push_back(surfMatches_rav4_1_rav4_2[i][0]);
+    }
+  }
+
+  // Draw the good matches
+  Mat rav4_1_SurfMatch_rav4_2;
+  drawMatches( rav4_1CVImg_gray, rav4_1SurfKeypoints, rav4_2CVImg_gray, rav4_2SurfKeypoints,
+               goodSurfMatches_rav4_1_rav4_2, rav4_1_SurfMatch_rav4_2, Scalar::all(-1), Scalar::all(-1),
+               vector<char>());//, DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
+  // Show matched matches
+  namedWindow("rav4_1 and rav4_2 matched SURF features", CV_WINDOW_AUTOSIZE); 
+  imshow( "rav4_1 and rav4_2 matched SURF features", rav4_1_SurfMatch_rav4_2 );
+
+  waitKey(0);
+
+  // Surf matching setup for rav4_1 and jeep
+  /*
+  maxDist = 0; minDist = 100;
+
+  // get min and max distance
+  for( int i = 0; i < rav4_1SurfDescriptors.rows; i++ ){
+    double dist = surfMatches_rav4_1_jeep[i].distance;
+    if( dist < minDist )
+      minDist = dist;
+    if( dist > maxDist )
+      maxDist = dist;
+  }
+
+  cout << "Max distance " << maxDist << endl;
+  cout << "Min distance " << minDist << endl;
+  */
+  // find good matches
+  vector< DMatch > goodSurfMatches_rav4_1_jeep;
+
+  /*
+  for( int i = 0; i < rav4_1SurfDescriptors.rows; i++ ){
+    if( surfMatches_rav4_1_jeep[i].distance <= 1.5*minDist ){
+      goodSurfMatches_rav4_1_jeep.push_back( surfMatches_rav4_1_jeep[i]);
+    }
+  }
+  */
+  for (int i=0; i<surfMatches_rav4_1_jeep.size(); i++){
+    if (surfMatches_rav4_1_jeep[i][0].distance<0.8*surfMatches_rav4_1_jeep[i][1].distance){
+      goodSurfMatches_rav4_1_jeep.push_back(surfMatches_rav4_1_jeep[i][0]);
+    }
+  }
+
+  // Draw the good matches
+  Mat rav4_1_SurfMatch_jeep;
+  drawMatches( rav4_1CVImg_gray, rav4_1SurfKeypoints, jeepCVImg_gray, jeepSurfKeypoints,
+               goodSurfMatches_rav4_1_jeep, rav4_1_SurfMatch_jeep, Scalar::all(-1), Scalar::all(-1),
+               vector<char>());//, DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
+  // Show matched matches
+  namedWindow("rav4_1 and jeep matched SURF features", CV_WINDOW_AUTOSIZE); 
+  imshow( "rav4_1 and jeep matched SURF features", rav4_1_SurfMatch_jeep );
+
+  waitKey(0);
+
+  // Surf matching setup for rav4_1 and bus
+  /*
+  maxDist = 0; minDist = 100;
+  
+  // get min and max distance
+  for( int i = 0; i < rav4_1SurfDescriptors.rows; i++ ){
+    double dist = surfMatches_rav4_1_bus[i].distance;
+    if( dist < minDist )
+      minDist = dist;
+    if( dist > maxDist )
+      maxDist = dist;
+  }
+
+  cout << "Max distance " << maxDist << endl;
+  cout << "Min distance " << minDist << endl;
+  */
+  // find good matches
+  vector< DMatch > goodSurfMatches_rav4_1_bus;
+
+  /*
+  for( int i = 0; i < rav4_1SurfDescriptors.rows; i++ ){
+    if( surfMatches_rav4_1_bus[i].distance <= 1.5*minDist ){
+      goodSurfMatches_rav4_1_bus.push_back( surfMatches_rav4_1_bus[i]);
+    }
+  }
+  */
+  for (int i=0; i<surfMatches_rav4_1_bus.size(); i++){
+    if (surfMatches_rav4_1_bus[i][0].distance<0.8*surfMatches_rav4_1_bus[i][1].distance){
+      goodSurfMatches_rav4_1_bus.push_back(surfMatches_rav4_1_bus[i][0]);
+    }
+  }
+
+  // Draw the good matches
+  Mat rav4_1_SurfMatch_bus;
+  drawMatches( rav4_1CVImg_gray, rav4_1SurfKeypoints, busCVImg_gray, busSurfKeypoints,
+               goodSurfMatches_rav4_1_bus, rav4_1_SurfMatch_bus, Scalar::all(-1), Scalar::all(-1),
+               vector<char>());//, DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
+  // Show matched matches
+  namedWindow("rav4_1 and bus matched SURF features", CV_WINDOW_AUTOSIZE); 
+  imshow( "rav4_1 and bus matched SURF features", rav4_1_SurfMatch_bus );
+
+  waitKey(0);
+  
+  return 0;
+}
+
+
+// Homework 3
+// This code implements Bag of words matching for SIFT features of images
+// Question 2c
+// This code takes no arguments
+// The image paths are hard coded here. change if needed.
+// 
+//
+// Name: Ekraam Sabir 
+// USC ID: 1428-2892-90
+// email: esabir@usc.edu
+// 
+
+#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <fstream>
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <sstream>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <limits.h>
+
+using namespace std;
+using namespace cv;
+
+int main(int argc, char *argv[])
+
+{
+
+  FILE *file;
+
+  // transfer Images to opencv
+  Mat rav4_1CVImg = imread("./HW3 Images/P2/rav4_1.jpg", CV_LOAD_IMAGE_UNCHANGED);
+  Mat rav4_2CVImg = imread("./HW3 Images/P2/rav4_2.jpg", CV_LOAD_IMAGE_UNCHANGED);
+  Mat jeepCVImg = imread("./HW3 Images/P2/jeep.jpg", CV_LOAD_IMAGE_UNCHANGED);
+  Mat busCVImg = imread("./HW3 Images/P2/bus.jpg", CV_LOAD_IMAGE_UNCHANGED);
+
+  // convert to grayscale
+  Mat rav4_1CVImg_gray;
+  Mat rav4_2CVImg_gray;
+  Mat jeepCVImg_gray;
+  Mat busCVImg_gray;
+  cvtColor(rav4_1CVImg, rav4_1CVImg_gray, CV_BGR2GRAY);
+  cvtColor(rav4_2CVImg, rav4_2CVImg_gray, CV_BGR2GRAY);
+  cvtColor(jeepCVImg, jeepCVImg_gray, CV_BGR2GRAY);
+  cvtColor(busCVImg, busCVImg_gray, CV_BGR2GRAY);
+
+  // SIFT
+  // get SIFT features
+  SiftFeatureDetector siftDetector;
+  vector<KeyPoint> rav4_1SiftKeypoints, rav4_2SiftKeypoints, jeepSiftKeypoints, busSiftKeypoints;
+  // detect keypoints
+  siftDetector.detect(rav4_1CVImg_gray, rav4_1SiftKeypoints);
+  siftDetector.detect(rav4_2CVImg_gray, rav4_2SiftKeypoints);
+  siftDetector.detect(jeepCVImg_gray, jeepSiftKeypoints);
+  siftDetector.detect(busCVImg_gray, busSiftKeypoints);
+
+  // get descriptors
+  SiftDescriptorExtractor siftExtractor;
+  Mat rav4_1SiftDescriptors, rav4_2SiftDescriptors, jeepSiftDescriptors, busSiftDescriptors;
+  siftExtractor.compute( rav4_1CVImg_gray, rav4_1SiftKeypoints, rav4_1SiftDescriptors );
+  siftExtractor.compute( rav4_2CVImg_gray, rav4_2SiftKeypoints, rav4_2SiftDescriptors );
+  siftExtractor.compute( jeepCVImg_gray, jeepSiftKeypoints, jeepSiftDescriptors );
+  siftExtractor.compute( busCVImg_gray, busSiftKeypoints, busSiftDescriptors );
+
+  // find number of descriptors in each
+  int descCount[3];
+  descCount[0] = rav4_1SiftDescriptors.rows;
+  descCount[1] = jeepSiftDescriptors.rows;
+  descCount[2] = busSiftDescriptors.rows;
+
+  // concatenate matrix
+  Mat data;
+  vconcat(rav4_1SiftDescriptors, jeepSiftDescriptors, data);
+  vconcat(data, busSiftDescriptors, data);
+
+  // k-means on the matrix
+  Mat centers;
+  Mat labels;
+  kmeans(data, 8, labels, TermCriteria(TermCriteria::EPS+TermCriteria::COUNT, 10000, 0.1), 3, KMEANS_PP_CENTERS, centers);
+
+  // get histogram of labels (image x bin)
+  int dataHist[3][8];
+  int base = 0;
+  
+  for (int row=0; row<3; row++){
+    for (int bin=0; bin<8; bin++){
+      dataHist[row][bin] = 0;
+    }
+  }
+
+  for (int imgNum=0; imgNum<3; imgNum++){
+    for (int row=0; row<descCount[imgNum]; row++){
+      int bin = labels.at<int>(base+row,0);
+      dataHist[imgNum][bin] += 1;
+    }
+    base += descCount[imgNum];
+  }
+
+  // compute labels for target
+  int targHist[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  for (int i=0; i<rav4_2SiftDescriptors.rows; i++){
+    
+    // get euclidean distance
+    Mat dummyMat;
+    for (int j=0; j<8; j++)
+      dummyMat.push_back(rav4_2SiftDescriptors.row(i));
+
+    dummyMat = dummyMat - centers;
+    pow(dummyMat, 2, dummyMat);
+    reduce(dummyMat, dummyMat, 1, CV_REDUCE_SUM);
+    sqrt(dummyMat, dummyMat);
+
+    // find bin with smallest distance
+    double min, max;
+    Point minPos, maxPos;
+    minMaxLoc(dummyMat, &min, &max, &minPos, &maxPos);
+    
+    // add to bin
+    targHist[minPos.y]++;
+  }
+
+  // list of images
+  string ImageNames[3] = {"Rav4_1", "Jeep", "Bus"};
+    
+  // compute target histogram similarity with data histograms using euclidian distance
+  int matchImg = 0;
+  float dist = INT_MAX;
+  for (int imgNum=0; imgNum<3; imgNum++){
+    
+    float num = 0;
+    for (int i=0; i<8; i++){
+      num += pow(targHist[i]-dataHist[imgNum][i], 2);
+    }
+    num = sqrt(num);
+
+    if (num<dist){
+      dist = num;
+      matchImg = imgNum;
+    }
+
+  }
+
+  cout << "The codebook distributions/histogram " << endl;
+  for (int imgNum=0; imgNum<3; imgNum++){
+    cout << ImageNames[imgNum] << ": " << endl;
+    for (int col=0; col<8; col++){
+      cout << dataHist[imgNum][col] << " ";
+    }
+    cout << endl;
+  }
+
+  cout << "Distribution for query (Rav4_2) is" << endl;
+  for (int col=0; col<8; col++){
+    cout << targHist[col] << " ";
+  }
+  cout << endl;
+
+  cout << "The matching image found for Rav4_2 is " << ImageNames[matchImg] << " with an euclidian score of " << dist << " between histograms " << endl;
+
+  return 0;
+}

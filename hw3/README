@@ -1,0 +1,50 @@
+# EE569 Homework Assignment #3
+# Date: Nov 6, 2016
+# Name: Ekraam Sabir
+# ID: 1428-2892-90
+# email: esabir@usc.edu
+#
+# Compiled on Linux Ubuntu 14.04 LTS with gcc
+# Define compiler and linker
+
+
+CC=compile
+CFLAGS=-g -Wall
+LN=g++
+
+All: textureClass textureSegment salientPointDetection salientPointMatching BagOfWords
+
+textureClass: textureClass.cpp
+	@echo "Compiling textureClass.cpp"
+	$(LN) -o textureClass textureClass.cpp kmeans.c `pkg-config --libs --cflags opencv`
+	@echo "Question 1 - a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "Input Image is hardcoded into the script. make path changes there"
+
+textureSegment: textureSegment.cpp
+	@echo "compiling textureSegment.cpp"
+	$(LN) -o textureSegment textureSegment.cpp kmeans.c `pkg-config --libs --cflags opencv`
+	@echo "Question 1 - b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "Input Image is hardcoded into the script. make path changes there"
+
+salientPointDetection: salientPointDetection.cpp
+	@echo "Compiling salientPointDetection.cpp"
+	$(LN) -o salientPointDetection salientPointDetection.cpp `pkg-config --libs --cflags opencv`
+	@echo "Question 2 - a"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "Input Image is hardcoded into the script. make path changes there"
+
+salientPointMatching: salientPointMatching.cpp
+	@echo "Compiling salientPointMatching.cpp"
+	$(LN) -o salientPointMatching salientPointMatching.cpp `pkg-config --libs --cflags opencv`
+	@echo "Question 2 - b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "Input Image is hardcoded into the script. make path changes there"
+
+BagOfWords: BagOfWords.cpp
+	@echo "Compiling BagOfWords.cpp"
+	$(LN) -o BagOfWords BagOfWords.cpp `pkg-config --libs --cflags opencv`
+	@echo "Question 2 - b"
+	@echo "Run the code as follows (with all arguments):"
+	@echo "Input Image is hardcoded into the script. make path changes there"
